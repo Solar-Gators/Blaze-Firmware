@@ -17,11 +17,18 @@ add_compile_options(
         -Wextra
 )
 
+add_link_options(
+        -mcpu=cortex-m4
+        -mthumb
+        -mfpu=fpv4-sp-d16
+        -mfloat-abi=hard
+)
+
 # Shared centralized resources
 add_subdirectory(resources)
 
 # Firmware subsystems
 add_subdirectory(firmware/Front-VCU)
-add_subdirectory(firmware/Rear-VCU)
-add_subdirectory(firmware/Steering-Wheel)
-add_subdirectory(firmware/Telemetry)
+#add_subdirectory(firmware/Rear-VCU)
+#add_subdirectory(firmware/Steering-Wheel)
+#add_subdirectory(firmware/Telemetry)
