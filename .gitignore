@@ -32,3 +32,12 @@ mx.scratch
 # Optional IDE / Tool Configuration Overlays
 .vscode/
 *.launch
+
+# resources will be centralized
+#firmware/**/Middlewares/
+#firmware/**/Drivers/
+
+# CubeIDE / Eclipse metadata
+**/.settings/
+**/.cproject
+**/.project
