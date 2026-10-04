@@ -1,10 +1,16 @@
-# Toolchain & Editor IDES (CLion / JetBrains)
+# IDEs & Editor Configuration
 .idea/
+.vscode/
 cmake-build-*/
-.clang-format
 *.swp
 
-# Common CMake build outputs
+# Eclipse / STM32CubeIDE Metadata
+.metadata/
+**/.settings/
+**/.cproject
+**/.project
+
+# Common CMake Build Artifacts
 build/
 out/
 CMakeCache.txt
@@ -19,25 +25,21 @@ Release/
 release/
 *.o
 *.d
+*.ko
+*.obj
 *.elf
 *.bin
 *.hex
 *.map
 *.su
 
+# Debug & Launch Configurations
+*.launch
+
 # STM32 / CubeMX Temporary Files
 .mxproject
 mx.scratch
 
-# Optional IDE / Tool Configuration Overlays
-.vscode/
-*.launch
-
-# resources will be centralized
-#firmware/**/Middlewares/
-#firmware/**/Drivers/
-
-# CubeIDE / Eclipse metadata
-**/.settings/
-**/.cproject
-**/.project
+# Include STM32CubeMX Drivers & Middlewares
+!firmware/**/Drivers/
+!firmware/**/Middlewares/
