@@ -16,9 +16,7 @@ if(NOT DRIVER_SOURCES)
     if(NOT EXISTS "${DUMMY_SRC}")
         file(WRITE "${DUMMY_SRC}" "/* Placeholder source file for SolarGators_drivers library */\n")
     endif()
-    set(DRIVER_SOURCES "${DUMMY_SRC}"
-            SolarGators_drivers/Inc/temp.h
-            SolarGators_drivers/Src/temp.cpp)
+    set(DRIVER_SOURCES "${DUMMY_SRC}")
 endif()
 
 # 3. Define the Static Central Drivers Library

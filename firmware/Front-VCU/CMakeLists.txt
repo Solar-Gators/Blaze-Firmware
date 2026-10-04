@@ -81,6 +81,7 @@ target_link_options(${PROJECT_NAME}.elf PRIVATE
         -T${LINKER_SCRIPT}
         -Wl,-Map=${PROJECT_NAME}.map
         -Wl,--gc-sections
+        -Wl,--print-memory-usage
         --specs=nano.specs
 )
 
