@@ -1,0 +1,79 @@
+# .clang-format
+---
+Language: Cpp
+BasedOnStyle: Google
+
+# General layout
+IndentWidth: 4
+TabWidth: 4
+UseTab: Never
+ColumnLimit: 100
+PointerAlignment: Left
+ContinuationIndentWidth: 4
+ReflowComments: false
+MaxEmptyLinesToKeep: 1
+KeepEmptyLinesAtTheStartOfBlocks: false
+
+# Braces / wrapping
+BreakBeforeBraces: Allman
+BraceWrapping:
+  AfterFunction: true
+  AfterClass: true
+  AfterControlStatement: Always
+  AfterEnum: true
+  AfterStruct: true
+  AfterNamespace: true
+  BeforeElse: true
+  BeforeCatch: true
+  BeforeWhile: true
+  IndentBraces: false
+
+AllowShortBlocksOnASingleLine: Never
+AllowShortFunctionsOnASingleLine: Inline
+AllowShortIfStatementsOnASingleLine: false
+AllowShortLoopsOnASingleLine: false
+AlwaysBreakAfterReturnType: None
+AlwaysBreakTemplateDeclarations: Yes
+BreakConstructorInitializers: BeforeColon
+BreakBeforeTernaryOperators: true
+BreakBeforeBinaryOperators: None   # consider NonAssignment if you like operators-first
+
+# Spacing
+SpaceBeforeParens: ControlStatements
+SpaceBeforeAssignmentOperators: true
+SpacesInParentheses: false
+SpacesInSquareBrackets: false
+SpacesInContainerLiterals: true
+SpaceAfterCStyleCast: true
+
+# Indentation
+IndentCaseLabels: true
+IndentGotoLabels: true
+IndentPPDirectives: None   # consider AfterHash if you want indented continuations
+Cpp11BracedListStyle: true
+FixNamespaceComments: true
+NamespaceIndentation: None
+
+# Includes
+SortIncludes: true
+IncludeBlocks: Regroup
+IncludeCategories:
+  - Regex: '^<c[a-z_]+>'          # C++ std headers like <cstdint>
+    Priority: 1
+  - Regex: '^<.*\.h>'             # C system headers
+    Priority: 2
+  - Regex: '^(<|")(cmsis|arm_math).*'   # CMSIS
+    Priority: 3
+  - Regex: '^(<|")stm32.*'        # STM32 HAL/LL
+    Priority: 4
+  - Regex: '^"(.*)"'              # Project headers (quoted)
+    Priority: 5
+  - Regex: '.*'                   # Fallback
+    Priority: 6
+
+# Arguments / params
+BinPackArguments: false
+BinPackParameters: false
+ConstructorInitializerAllOnOneLineOrOnePerLine: true
+AllowAllParametersOfDeclarationOnNextLine: false
+...

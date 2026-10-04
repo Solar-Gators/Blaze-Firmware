@@ -1,69 +1,45 @@
-# Prerequisites
-*.d
-
-# Compiled Object files
-*.slo
-*.lo
-*.o
-*.obj
-
-# Precompiled Headers
-*.gch
-*.pch
-
-# Linker files
-*.ilk
-
-# Debugger Files
-*.pdb
-
-# Compiled Dynamic libraries
-*.so
-*.dylib
-*.dll
-*.so.*
-
-
-# Fortran module files
-*.mod
-*.smod
-
-# Compiled Static libraries
-*.lai
-*.la
-*.a
-*.lib
-
-# Executables
-*.exe
-*.out
-*.app
-
-# Build directories
-build/
-Build/
-build-*/
-
-# CMake generated files
-CMakeFiles/
-CMakeCache.txt
-cmake_install.cmake
-Makefile
-install_manifest.txt
-compile_commands.json
-
-# Temporary files
-*.tmp
-*.log
-*.bak
+# IDEs & Editor Configuration
+.idea/
+.vscode/
+cmake-build-*/
 *.swp
 
-# vcpkg
-vcpkg_installed/
+# Eclipse / STM32CubeIDE Metadata
+.metadata/
+**/.settings/
+**/.cproject
+**/.project
 
-# debug information files
-*.dwo
+# Common CMake Build Artifacts
+build/
+out/
+CMakeCache.txt
+CMakeFiles/
+cmake_install.cmake
+compile_commands.json
 
-# test output & cache
-Testing/
-.cache/
+# GCC ARM / Embedded Build Artifacts
+Debug/
+debug/
+Release/
+release/
+*.o
+*.d
+*.ko
+*.obj
+*.elf
+*.bin
+*.hex
+*.map
+*.su
+
+# Debug & Launch Configurations
+*.launch
+
+# STM32 / CubeMX Temporary Files
+.mxproject
+mx.scratch
+
+# Include STM32CubeMX Drivers & Middlewares
+!firmware/**/Drivers/
+!firmware/**/Middlewares/
