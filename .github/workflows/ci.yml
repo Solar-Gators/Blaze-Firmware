@@ -80,10 +80,15 @@ jobs:
       - name: Configure (${{ matrix.preset }})
         run: cmake --preset "${{ matrix.preset }}"
 
-      - name: Build (${{ matrix.preset }})
+#      - name: Build (${{ matrix.preset }})
+#        run: |
+#          cmake --build --preset "${{ matrix.preset }}" \
+#            --target all --parallel 2
+
+      - name: Build Front-VCU (${{ matrix.preset }})
         run: |
           cmake --build --preset "${{ matrix.preset }}" \
-            --target all --parallel 2
+            --target Front-VCU.elf --parallel 2
 
       - name: Upload firmware artifacts (${{ matrix.preset }})
         if: ${{ !cancelled() }}
