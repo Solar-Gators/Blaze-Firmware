@@ -6,16 +6,19 @@ Firmware project for Blaze's front vehicle control unit.
 
 ## Current Status
 
-The project currently provides generated STM32 peripheral initialization and a minimal FreeRTOS application.
+The project currently provides generated STM32 peripheral initialization and a
+minimal FreeRTOS application.
 
-The following are intended responsibilities, not implemented features in the current application code:
+The following are intended responsibilities, not implemented features in the
+current application code:
 
 - Throttle
 - Brake light control
 - Front lighting, turn signal, and horn control
 - CAN message transmission and routing
 
-The checked-in configuration does not yet include the ADC and application I/O setup needed to support all of these functions.
+The checked-in configuration does not yet include the ADC and application I/O
+setup needed to support all of these functions.
 
 ## Hardware and Software Configuration
 
@@ -39,13 +42,23 @@ Board revision and schematic links are not documented in this directory.
 - GPIO support
 - FDCAN1, FDCAN2, and FDCAN3
 - The independent watchdog
-- The CMSIS-RTOS2 kernel and an application thread named `idleTask`
+- The CMSIS-RTOS2 kernel
+- Two application threads: `idleTask` and `defaultTask`
 
-`StartIdleTask()` currently loops with `osDelay(1)`. It does not perform vehicle control or CAN processing.
+`StartIdleTask()` currently loops with `osDelay(1)`.
 
-The stack-overflow and allocation-failure hooks in `Core/Src/app_freertos.c` are placeholders. The application also does not currently refresh the initialized watchdog.
+`StartDefaultTask()` calls `userDefaultTask()`, defined in
+`user/Src/user_threads.cpp`. That function currently loops with `osDelay(1)`.
+Its C-compatible declaration is in `user/Inc/user_threads.h`.
 
-Peripheral initialization alone does not establish working CAN communication, sensor acquisition, or control behavior.
+Neither task currently performs vehicle control or CAN processing.
+
+The stack-overflow and allocation-failure hooks in `Core/Src/app_freertos.c`
+are placeholders. The application also does not currently refresh the
+initialized watchdog.
+
+Peripheral initialization alone does not establish working CAN communication,
+sensor acquisition, or control behavior.
 
 ## Directory Layout
 
@@ -60,6 +73,9 @@ Front-VCU/
 │   └── STM32G483XX_FLASH.ld
 ├── Drivers/                      # STM32 HAL and CMSIS
 ├── Middlewares/                  # FreeRTOS and its CMSIS-RTOS2 adapter
+├── user/
+│   ├── Inc/                      # Application-owned headers
+│   └── Src/                      # Application-owned implementation and task logic
 ├── CMakeLists.txt
 ├── Front-VCU.ioc
 └── README.md
@@ -67,9 +83,11 @@ Front-VCU/
 
 ## Building
 
-This target is part of the repository-level CMake project. Use the repository root rather than configuring this directory independently.
+This target is part of the repository-level CMake project. Use the repository
+root rather than configuring this directory independently.
 
-See the root README for [tool requirements and build blockers](../../README.md#build-configuration).
+See the root README for
+[tool requirements and build blockers](../../README.md#build-configuration).
 
 After those blockers are resolved, the intended debug build is:
 
@@ -78,7 +96,8 @@ cmake --preset debug
 cmake --build --preset debug --target Front-VCU.elf
 ```
 
-Selecting this target does not bypass configuration errors in other enabled subsystems.
+Selecting this target does not bypass configuration errors in other enabled
+subsystems.
 
 ## STM32CubeMX Workflow
 
@@ -90,7 +109,8 @@ Selecting this target does not bypass configuration errors in other enabled subs
 5. Review the generated diff and confirm that CMake still references the correct
    startup assembly, linker script, sources, and headers.
 
-Keep custom edits in regenerated `Core/` files inside the corresponding user-code sections:
+Keep custom edits in regenerated `Core/` files inside the corresponding
+user-code sections:
 
 ```c
 /* USER CODE BEGIN 0 */
@@ -98,4 +118,9 @@ Keep custom edits in regenerated `Core/` files inside the corresponding user-cod
 /* USER CODE END 0 */
 ```
 
-Treat files under `CubeMX/` as generated artifacts. Make configuration changes through CubeMX where possible, and document any necessary manual startup or linker changes so they can be preserved during regeneration.
+Keep substantial application logic in `user/Inc/` and `user/Src/`, with calls
+from the appropriate generated user-code sections.
+
+Treat files under `CubeMX/` as generated artifacts. Make configuration changes
+through CubeMX where possible, and document any necessary manual startup or
+linker changes so they can be preserved during regeneration.
