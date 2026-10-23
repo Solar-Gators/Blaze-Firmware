@@ -4,6 +4,7 @@ project(Front-VCU C CXX ASM)
 # 1. Local Header Directories
 set(NODE_INCLUDES
         Core/Inc
+        user/Inc
         Drivers/STM32G4xx_HAL_Driver/Inc
         Drivers/STM32G4xx_HAL_Driver/Inc/Legacy
         Drivers/CMSIS/Device/ST/STM32G4xx/Include
@@ -13,10 +14,12 @@ set(NODE_INCLUDES
         Middlewares/Third_Party/FreeRTOS/Source/CMSIS_RTOS_V2
 )
 
-# 2. Collect CubeMX Generated Sources
+# 2. Collect Generated & User Sources
 file(GLOB_RECURSE CUBEMX_SOURCES
         "Core/Src/*.c"
         "Core/Src/*.cpp"
+        "user/Src/*.c"
+        "user/Src/*.cpp"
         "Drivers/STM32G4xx_HAL_Driver/Src/*.c"
         "Middlewares/Third_Party/FreeRTOS/Source/*.c"
         "Middlewares/Third_Party/FreeRTOS/Source/portable/GCC/ARM_CM4F/*.c"
