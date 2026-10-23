@@ -437,7 +437,7 @@ void StartDefaultTask(void *argument)
   /* Infinite loop */
   for(;;)
   {
-    userDefaultTask();
+    userDefaultTask(argument);
   }
   /* USER CODE END StartDefaultTask */
 }
