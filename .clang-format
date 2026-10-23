@@ -76,4 +76,3 @@ BinPackArguments: false
 BinPackParameters: false
 ConstructorInitializerAllOnOneLineOrOnePerLine: true
 AllowAllParametersOfDeclarationOnNextLine: false
-...
