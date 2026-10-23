@@ -9,11 +9,11 @@ set(NODE_INCLUDES
         Drivers/CMSIS/Device/ST/STM32L4xx/Include
         Drivers/CMSIS/Include
         Middlewares/Third_Party/FreeRTOS/Source/include
+        Middlewares/Third_Party/FreeRTOS/Source/portable/GCC
         Middlewares/Third_Party/FreeRTOS/Source/portable/GCC/ARM_CM4F
         Middlewares/Third_Party/FreeRTOS/Source/CMSIS_RTOS_V2
+        Middlewares/Third_Party/FreeRTOS/Source/CMSIS_RTOS
 )
-
-
 
 # 2. Collect CubeMX Generated Sources
 file(GLOB_RECURSE CUBEMX_SOURCES
@@ -22,10 +22,10 @@ file(GLOB_RECURSE CUBEMX_SOURCES
         "Drivers/STM32L4xx_HAL_Driver/Src/*.c"
         "Middlewares/Third_Party/FreeRTOS/Source/*.c"
         "Middlewares/Third_Party/FreeRTOS/Source/portable/GCC/ARM_CM4F/*.c"
+        "Middlewares/Third_Party/FreeRTOS/Source/portable/MemMang/*.c"
         "Middlewares/Third_Party/FreeRTOS/Source/CMSIS_RTOS_V2/*.c"
+        "Middlewares/Third_Party/FreeRTOS/Source/CMSIS_RTOS/*.c"
 )
-
-
 
 # Exclude unused FreeRTOS heap allocators (keep only heap_4.c)
 list(FILTER CUBEMX_SOURCES EXCLUDE REGEX "Middlewares/Third_Party/FreeRTOS/Source/portable/MemMang/heap_[1235]\\.c")
