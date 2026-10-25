@@ -6,10 +6,11 @@
 #define BLAZEFIRMWARE_USER_THREADS_H
 
 #ifdef __cplusplus
-extern "C" {
+extern "C"
+{
 #endif
 
-    void userStartCellCheck(void* argument);
+void userStartCellCheck(void* argument);
 
 #ifdef __cplusplus
 }
