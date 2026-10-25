@@ -22,7 +22,7 @@
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
-
+#include "user_threads.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -67,7 +67,7 @@ static void MX_CAN1_Init(void);
 static void MX_I2C2_Init(void);
 static void MX_SPI3_Init(void);
 void StartDefaultTask(void const * argument);
-void StartTask02(void const * argument);
+void StartCellCheck(void const * argument);
 
 /* USER CODE BEGIN PFP */
 
@@ -137,7 +137,7 @@ int main(void)
   defaultTaskHandle = osThreadCreate(osThread(defaultTask), NULL);
 
   /* definition and creation of CellCheck */
-  osThreadStaticDef(CellCheck, StartTask02, osPriorityHigh, 0, 128, CellCheckBuffer, &CellCheckControlBlock);
+  osThreadStaticDef(CellCheck, StartCellCheck, osPriorityHigh, 0, 128, CellCheckBuffer, &CellCheckControlBlock);
   CellCheckHandle = osThreadCreate(osThread(CellCheck), NULL);
 
   /* USER CODE BEGIN RTOS_THREADS */
@@ -465,22 +465,22 @@ void StartDefaultTask(void const * argument)
   /* USER CODE END 5 */
 }
 
-/* USER CODE BEGIN Header_StartTask02 */
+/* USER CODE BEGIN Header_StartCellCheck */
 /**
 * @brief Function implementing the CellCheck thread.
 * @param argument: Not used
 * @retval None
 */
-/* USER CODE END Header_StartTask02 */
-void StartTask02(void const * argument)
+/* USER CODE END Header_StartCellCheck */
+void StartCellCheck(void const * argument)
 {
-  /* USER CODE BEGIN StartTask02 */
+  /* USER CODE BEGIN StartCellCheck */
   /* Infinite loop */
   for(;;)
   {
-    osDelay(1);
+    userStartCellCheck(argument);
   }
-  /* USER CODE END StartTask02 */
+  /* USER CODE END StartCellCheck */
 }
 
 /**
