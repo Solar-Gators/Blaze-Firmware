@@ -4,6 +4,7 @@ project(BMS-Motherboard C CXX ASM)
 # 1. Local Header Directories
 set(NODE_INCLUDES
         Core/Inc
+        user/Inc
         Drivers/STM32G4xx_HAL_Driver/Inc
         Drivers/STM32G4xx_HAL_Driver/Inc/Legacy
         Drivers/CMSIS/Device/ST/STM32G4xx/Include
@@ -13,13 +14,16 @@ set(NODE_INCLUDES
         Middlewares/Third_Party/FreeRTOS/Source/CMSIS_RTOS_V2
 )
 
-# 2. Collect CubeMX Generated Sources
+# 2. Collect Generated & User Sources
 file(GLOB_RECURSE CUBEMX_SOURCES
         "Core/Src/*.c"
         "Core/Src/*.cpp"
+        "user/Src/*.c"
+        "user/Src/*.cpp"
         "Drivers/STM32G4xx_HAL_Driver/Src/*.c"
         "Middlewares/Third_Party/FreeRTOS/Source/*.c"
         "Middlewares/Third_Party/FreeRTOS/Source/portable/GCC/ARM_CM4F/*.c"
+        "Middlewares/Third_Party/FreeRTOS/Source/portable/MemMang/*.c"
         "Middlewares/Third_Party/FreeRTOS/Source/CMSIS_RTOS_V2/*.c"
 )
 
@@ -29,13 +33,15 @@ list(FILTER CUBEMX_SOURCES EXCLUDE REGEX "Middlewares/Third_Party/FreeRTOS/Sourc
 # Exclude HAL template sources to resolve duplicate symbol errors
 list(FILTER CUBEMX_SOURCES EXCLUDE REGEX ".*_template\\.c$")
 
-# 3. Locate Startup Assembly File
-file(GLOB STARTUP_SRC
-        "${CMAKE_CURRENT_SOURCE_DIR}/startup_*.s"
-        "${CMAKE_CURRENT_SOURCE_DIR}/startup_*.S"
-        "${CMAKE_CURRENT_SOURCE_DIR}/CubeMX/startup_*.s"
-        "${CMAKE_CURRENT_SOURCE_DIR}/CubeMX/startup_*.S"
-)
+# 3. Locate Startup Assembly File (in CubeMX folder)
+set(STARTUP_SRC "${CMAKE_CURRENT_SOURCE_DIR}/CubeMX/startup_stm32g483xx.s")
+
+if(NOT EXISTS "${STARTUP_SRC}")
+    file(GLOB STARTUP_SRC
+            "${CMAKE_CURRENT_SOURCE_DIR}/CubeMX/startup_*.s"
+            "${CMAKE_CURRENT_SOURCE_DIR}/CubeMX/startup_*.S"
+    )
+endif()
 
 if(NOT CUBEMX_SOURCES AND NOT STARTUP_SRC)
     message(FATAL_ERROR "No source files or startup script found for ${PROJECT_NAME}!")
@@ -52,11 +58,17 @@ target_compile_definitions(${PROJECT_NAME}.elf PRIVATE
         USE_HAL_DRIVER
 )
 
-# 6. Linker Configuration
-file(GLOB LINKER_SCRIPT
-        "${CMAKE_CURRENT_SOURCE_DIR}/*.ld"
-        "${CMAKE_CURRENT_SOURCE_DIR}/CubeMX/*.ld"
+target_compile_definitions(SolarGators_drivers PRIVATE
+        STM32G483xx
+        USE_HAL_DRIVER
 )
+
+# 6. Linker Configuration & Target Link Options (in CubeMX folder)
+set(LINKER_SCRIPT "${CMAKE_CURRENT_SOURCE_DIR}/CubeMX/STM32G483RETX_FLASH.ld")
+
+if(NOT EXISTS "${LINKER_SCRIPT}")
+    file(GLOB LINKER_SCRIPT "${CMAKE_CURRENT_SOURCE_DIR}/CubeMX/*.ld")
+endif()
 
 target_compile_options(${PROJECT_NAME}.elf PRIVATE
         -mcpu=cortex-m4
@@ -77,7 +89,7 @@ target_link_options(${PROJECT_NAME}.elf PRIVATE
         --specs=nano.specs
 )
 
-# 7. Link Central Drivers Library & Share Includes
+# 7. Link Central Drivers Library & Share CubeMX Includes
 target_link_libraries(${PROJECT_NAME}.elf PRIVATE SolarGators_drivers)
 target_include_directories(SolarGators_drivers PRIVATE ${NODE_INCLUDES})
 

@@ -22,7 +22,7 @@
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
-
+#include "user_threads.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -502,7 +502,7 @@ void StartCellCheck(void *argument)
   /* Infinite loop */
   for(;;)
   {
-    osDelay(1);
+    userStartCellCheck(argument);
   }
   /* USER CODE END StartCellCheck */
 }

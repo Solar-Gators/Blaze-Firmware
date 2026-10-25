@@ -9,7 +9,7 @@
 extern "C" {
 #endif
 
-void userDefaultTask(void* argument);
+    void userDefaultTask(void* argument);
 
 #ifdef __cplusplus
 }
