@@ -2,102 +2,83 @@
 
 Firmware project for Blaze's BMS daughterboard.
 
-[Back to the repository overview](../../README.md)
+[Repository overview](../../README.md)
 
-## Current Status
-
-The project contains STM32CubeMX-generated peripheral initialization, bundled
-STM32 drivers, an IAR project, and a CMake target definition.
-
-After initialization, `main()` enters an empty loop. Application-level
-measurement, communication, and fault-handling behavior are not implemented
-in the checked-in application code.
-
-## Hardware and Software Configuration
-
-These values describe the checked-in project configuration.
+## Configuration
 
 | Item | Configuration |
 |---|---|
 | MCU | STM32L433CCT6 |
-| Package | LQFP48 |
+| CubeMX project | `Daughterboard.ioc` |
 | STM32 firmware package | STM32Cube FW_L4 V1.18.2 |
-| CubeMX project | `Daughterboard 2.ioc` |
-| CubeMX output toolchain | EWARM V8.32 |
+| CubeMX output toolchain | Makefile |
+| Repository build | CMake and Arm GCC |
+| RTOS interface | CMSIS-RTOS2 over FreeRTOS |
 | CMake target | `BMS-Daughterboard.elf` |
-| Application execution | Bare-metal main loop; no RTOS startup in `main()` |
 
-Board revision and schematics are not documented. The filename
-`Daughterboard 2.ioc` does not establish a hardware revision.
+Board revision and schematics are not documented here.
 
-## Implemented Initialization
+## Current Implementation
 
-`Core/Src/main.c` initializes:
+The project contains generated peripheral initialization, GCC startup and
+linker files, and FreeRTOS support.
 
-- GPIO
-- ADC1
-- CAN1
-- I2C2
-- SPI3
+The application creates:
 
-GPIO definitions include names such as `ALERT`, `ADDR0`, `ADDR1`, `FAULT`,
-`ERROR`, `OK`, `CS1`, and `CS2`. Their electrical meaning and application
-behavior require confirmation against the hardware documentation.
+| Task | Entry function | Current behavior |
+|---|---|---|
+| `defaultTask` | `StartDefaultTask()` | Loops with `osDelay(1)` |
+| `CellCheck` | `StartCellCheck()` | Calls `userStartCellCheck()` |
 
-## Functional Responsibilities
+`userStartCellCheck()` is implemented in `user/Src/user_threads.cpp`.
+It currently loops with `osDelay(1)`.
 
-Not yet documented.
-
-The number of monitored cells, measurement hardware, balancing capability,
-addressing scheme, and fault behavior are unknown.
+The task name does not establish implemented cell measurement or protection.
+Measurement, balancing, communication, and fault-handling behavior remain
+to be defined and implemented.
 
 ## Directory Layout
 
 ```text
 BMS-Daughterboard/
 ├── Core/
+├── CubeMX/
+├── Drivers/
+├── Middlewares/
+├── user/
 │   ├── Inc/
 │   └── Src/
-├── Drivers/
-├── EWARM/
 ├── CMakeLists.txt
-└── Daughterboard 2.ioc
+└── Daughterboard.ioc
 ```
 
 ## Building
 
-The project is enabled in the repository-level CMake configuration.
-
-GCC build integration is incomplete: the supplied startup assembly and linker
-configuration are under `EWARM/`, but CMake searches the subsystem root and
-`CubeMX/` for startup assembly and GCC `.ld` linker scripts.
-
-After the build configuration is completed, the intended command from the
-repository root is:
+From the repository root:
 
 ```sh
 cmake --preset debug
 cmake --build --preset debug --target BMS-Daughterboard.elf
 ```
 
-A successful build has not been established by this documentation.
+For Release, replace `debug` with `release` in both commands.
 
-See the [environment setup guide](../../docs/guides/environment-setup.md).
+Outputs are generated under `build/<preset>/firmware/BMS-Daughterboard/`.
 
-## STM32CubeMX Workflow
+## Development
 
-Open `Daughterboard 2.ioc` to modify peripheral or pin configuration.
+Open `Daughterboard.ioc` for CubeMX changes. Older documentation used the
+filename `Daughterboard 2.ioc`; that is not the current project filename.
 
-Preserve custom edits in regenerated files inside their `USER CODE` sections.
-Review the generated files and corresponding CMake inputs after regeneration.
-
-See the [CubeMX workflow guide](../../docs/guides/cubemx-workflow.md).
+- [CubeMX workflow](../../docs/guides/cubemx-workflow.md)
+- [Adding threads](../../docs/guides/adding-threads.md)
 
 ## Information Still Needed
 
 - Board revision and schematic reference
-- Measurement devices and channel assignments
-- Address selection behavior
-- CAN message definitions and bus configuration
-- Fault indications, thresholds, and recovery behavior
-- Validated build, programming, and bench-test procedure
+- Measurement hardware and number of channels
+- Address-selection behavior
+- Balancing capability and requirements
+- CAN message definitions
+- Fault thresholds and recovery behavior
+- Programming and bench-test procedure
