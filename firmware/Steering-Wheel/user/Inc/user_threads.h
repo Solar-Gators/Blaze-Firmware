@@ -6,7 +6,8 @@
 #define BLAZEFIRMWARE_USER_THREADS_H
 
 #ifdef __cplusplus
-extern "C" {
+extern "C"
+{
 #endif
 
     void userDefaultTask(void* argument);
@@ -15,4 +16,4 @@ extern "C" {
 }
 #endif
 
-#endif //BLAZEFIRMWARE_USER_THREADS_H
+#endif  //BLAZEFIRMWARE_USER_THREADS_H

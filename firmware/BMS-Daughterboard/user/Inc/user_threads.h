@@ -10,10 +10,10 @@ extern "C"
 {
 #endif
 
-void userStartCellCheck(void* argument);
+    void userStartCellCheck(void* argument);
 
 #ifdef __cplusplus
 }
 #endif
 
-#endif //BLAZEFIRMWARE_USER_THREADS_H
+#endif  //BLAZEFIRMWARE_USER_THREADS_H
