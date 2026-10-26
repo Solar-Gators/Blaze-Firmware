@@ -2,123 +2,105 @@
 
 Firmware project for Blaze's steering wheel.
 
-[Back to the repository overview](../../README.md)
+[Repository overview](../../README.md)
 
-## Current Status
-
-The project contains generated peripheral initialization, a minimal FreeRTOS
-application, partial TouchGFX integration, and an IAR project.
-
-The checked-in files do not provide a complete GUI application or a complete
-GCC build configuration.
-
-## Hardware and Software Configuration
-
-These values describe the checked-in project configuration.
+## Configuration
 
 | Item | Configuration |
 |---|---|
 | MCU | STM32U5G9NJH6Q |
-| Package | TFBGA216 |
 | CPU | Arm Cortex-M33 |
-| STM32 firmware package | STM32Cube FW_U5 V1.9.0 |
 | CubeMX project | `Steering-Wheel.ioc` |
-| CubeMX output toolchain | EWARM V9.20 |
-| RTOS interface | FreeRTOS with CMSIS-RTOS2 |
-| Graphics integration | TouchGFX-generated support files |
+| STM32 firmware package | STM32Cube FW_U5 V1.9.0 |
+| CubeMX output toolchain | Makefile |
+| Repository build | CMake and Arm GCC |
+| RTOS interface | CMSIS-RTOS2 over FreeRTOS |
+| TouchGFX generator version | 4.26.1 |
+| TouchGFX project | `TouchGFX/Steering-Wheel.touchgfx` |
 | CMake target | `Steering-Wheel.elf` |
 
-Board revision, display part number, input hardware, and schematics are not
-documented.
+Board revision, display part number, touch hardware, and schematics are not
+documented here.
 
-## Implemented Initialization
+## Current Implementation
 
-`Core/Src/main.c` includes initialization for:
+The project includes generated peripheral initialization, GCC startup and
+linker files, FreeRTOS, a TouchGFX project, generated GUI sources, and
+TouchGFX/GPU libraries.
 
-- GPIO
-- CRC
-- DSI
-- FDCAN1
-- GFXTIM and GPU2D
-- LTDC
-- FMC SRAM
-- DAC1
-- TouchGFX and the RTOS kernel
+The CMake target uses the GCC Cortex-M33 non-TrustZone FreeRTOS port.
 
-The USB initialization function is present but empty.
+`main()` initializes TouchGFX. `MX_FREERTOS_Init()` creates `defaultTask`,
+which calls `userDefaultTask()`. That user function currently loops with
+`osDelay(1)`.
 
-The RTOS application creates `defaultTask`, which loops with `osDelay(1)`.
-It does not create a TouchGFX rendering task.
+## Remaining Graphics Integration
 
-`STM32TouchController::init()` is empty, and `sampleTouch()` always returns
-`false`. These are placeholders, not a working touch driver.
+The generated `TouchGFX_Task()` entry function exists, but the current RTOS
+initialization does not create a thread that runs it.
 
-## Functional Responsibilities
+`STM32TouchController::init()` is empty, and `sampleTouch()` returns `false`.
+Touch input is therefore not implemented.
 
-The detailed display content, driver inputs, CAN messages, and fault indications
-are not yet documented.
+The USB initialization function is also a placeholder.
 
-No particular button layout, touch device, or vehicle-control behavior is
-assumed here.
+A successful build confirms compilation and linking. It does not establish
+working display output, touch input, external memory, or vehicle-data updates.
 
 ## Directory Layout
 
 ```text
 Steering-Wheel/
 ├── Core/
-│   ├── Inc/
-│   └── Src/
+├── CubeMX/
 ├── Drivers/
-├── EWARM/
 ├── Middlewares/
 ├── TouchGFX/
 │   ├── App/
+│   ├── assets/
+│   ├── generated/
+│   ├── gui/
+│   ├── simulator/
 │   ├── target/
-│   └── ApplicationTemplate.touchgfx.part
+│   └── Steering-Wheel.touchgfx
+├── user/
+│   ├── Inc/
+│   └── Src/
 ├── CMakeLists.txt
 └── Steering-Wheel.ioc
 ```
 
 ## Building
 
-The project is enabled in the repository-level CMake configuration, but
-GCC integration is incomplete:
-
-- Startup assembly and linker configuration are supplied for IAR under `EWARM/`.
-- The GCC FreeRTOS port path referenced by CMake is absent from the checked-in
-  middleware; the supplied port is an IAR port.
-- The GUI application directories referenced by CMake are absent.
-- Existing `TouchGFX/App/` and `TouchGFX/target/` sources are not included by the
-  current source patterns.
-- Shared-library and global Cortex-M4 settings need review for this
-  Cortex-M33 target.
-
-After the build integration is completed, the intended command from the
-repository root is:
+From the repository root:
 
 ```sh
 cmake --preset debug
 cmake --build --preset debug --target Steering-Wheel.elf
 ```
 
-A successful build has not been established by this documentation.
+For Release, replace `debug` with `release` in both commands.
 
-See the [environment setup guide](../../docs/guides/environment-setup.md).
+Outputs are generated under `build/<preset>/firmware/Steering-Wheel/`.
 
-## STM32CubeMX Workflow
+## Development
 
-Open `Steering-Wheel.ioc` to modify peripheral or pin configuration.
+Use CubeMX for hardware and RTOS configuration. Use TouchGFX Designer for
+screen layout and generated GUI code.
 
-Review generated TouchGFX files separately from application-owned files.
-The `.touchgfx.part` file is a template fragment, not a complete GUI project.
+Keep custom GUI behavior in application-owned GUI classes. Keep non-GUI
+application logic under `user/`.
 
-See the [CubeMX workflow guide](../../docs/guides/cubemx-workflow.md).
+- [TouchGFX workflow](../../docs/guides/touchgfx-workflow.md)
+- [CubeMX workflow](../../docs/guides/cubemx-workflow.md)
+- [Adding threads](../../docs/guides/adding-threads.md)
 
 ## Information Still Needed
 
 - Board revision and schematic reference
-- Display, memory, and input-device part numbers
-- GUI requirements and vehicle data definitions
-- Display and input-driver implementation
-- CAN messages and communication behavior
-- Validated build, programming, and display-test procedure
+- Display, touch-controller, and memory part numbers
+- Display timing and memory configuration
+- GUI requirements and vehicle-data definitions
+- Input handling and CAN messages
+- Rendering-task stack and priority validation
+- Programming, display, and touch-test procedures
