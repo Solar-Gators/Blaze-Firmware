@@ -1,0 +1,104 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  format:
+    name: clang-format check
+    runs-on: ubuntu-24.04
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+
+      - name: Install clang-format 17
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y clang-format-17
+          clang-format-17 --version
+
+      - name: Check project-owned sources
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          # Check tracked application and shared-driver files only.
+          # Exclude generated Core files, HAL, CMSIS, and middleware.
+          git ls-files -z -- \
+            'firmware/*/user/*.c' \
+            'firmware/*/user/*.cpp' \
+            'firmware/*/user/*.h' \
+            'firmware/*/user/*.hpp' \
+            'resources/SolarGators_drivers/*.c' \
+            'resources/SolarGators_drivers/*.cpp' \
+            'resources/SolarGators_drivers/*.h' \
+            'resources/SolarGators_drivers/*.hpp' \
+            | xargs -0 -r -n 100 \
+                clang-format-17 --style=file --dry-run --Werror
+
+  build:
+    name: Build (${{ matrix.preset }})
+    runs-on: ubuntu-24.04
+
+    strategy:
+      fail-fast: false
+      matrix:
+        preset: [debug, release]
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+
+      - name: Install Arm GCC and build dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends \
+            cmake \
+            ninja-build \
+            gcc-arm-none-eabi \
+            binutils-arm-none-eabi \
+            libnewlib-arm-none-eabi \
+            libstdc++-arm-none-eabi-newlib
+
+      - name: Show tool versions
+        run: |
+          cmake --version
+          ninja --version
+          arm-none-eabi-gcc --version
+          arm-none-eabi-g++ --version
+
+      - name: Configure (${{ matrix.preset }})
+        run: cmake --preset "${{ matrix.preset }}"
+
+#      - name: Build (${{ matrix.preset }})
+#        run: |
+#          cmake --build --preset "${{ matrix.preset }}" \
+#            --target all --parallel 2
+
+      - name: Build Front-VCU (${{ matrix.preset }})
+        run: |
+          cmake --build --preset "${{ matrix.preset }}" \
+            --target Front-VCU.elf --parallel 2
+
+      - name: Upload firmware artifacts (${{ matrix.preset }})
+        if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@v6
+        with:
+          name: firmware-${{ matrix.preset }}
+          path: |
+            build/${{ matrix.preset }}/firmware/**/*.elf
+            build/${{ matrix.preset }}/firmware/**/*.bin
+            build/${{ matrix.preset }}/firmware/**/*.hex
+            build/${{ matrix.preset }}/firmware/**/*.map
+          if-no-files-found: warn
+          retention-days: 14
