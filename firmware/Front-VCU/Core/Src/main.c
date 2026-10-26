@@ -22,11 +22,10 @@
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
-
+#include "user_threads.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
-typedef StaticTask_t osStaticThreadDef_t;
 /* USER CODE BEGIN PTD */
 
 /* USER CODE END PTD */
@@ -48,17 +47,12 @@ FDCAN_HandleTypeDef hfdcan3;
 
 IWDG_HandleTypeDef hiwdg;
 
-/* Definitions for idleTask */
-osThreadId_t idleTaskHandle;
-uint32_t idleTaskBuffer[ 128 ];
-osStaticThreadDef_t idleTaskControlBlock;
-const osThreadAttr_t idleTask_attributes = {
-  .name = "idleTask",
-  .stack_mem = &idleTaskBuffer[0],
-  .stack_size = sizeof(idleTaskBuffer),
-  .cb_mem = &idleTaskControlBlock,
-  .cb_size = sizeof(idleTaskControlBlock),
-  .priority = (osPriority_t) osPriorityLow,
+/* Definitions for defaultTask */
+osThreadId_t defaultTaskHandle;
+const osThreadAttr_t defaultTask_attributes = {
+  .name = "defaultTask",
+  .priority = (osPriority_t) osPriorityNormal,
+  .stack_size = 128 * 4
 };
 /* USER CODE BEGIN PV */
 
@@ -71,7 +65,7 @@ static void MX_FDCAN1_Init(void);
 static void MX_FDCAN2_Init(void);
 static void MX_FDCAN3_Init(void);
 static void MX_IWDG_Init(void);
-void StartIdleTask(void *argument);
+void StartDefaultTask(void *argument);
 
 /* USER CODE BEGIN PFP */
 
@@ -139,8 +133,8 @@ int main(void)
   /* USER CODE END RTOS_QUEUES */
 
   /* Create the thread(s) */
-  /* creation of idleTask */
-  idleTaskHandle = osThreadNew(StartIdleTask, NULL, &idleTask_attributes);
+  /* creation of defaultTask */
+  defaultTaskHandle = osThreadNew(StartDefaultTask, NULL, &defaultTask_attributes);
 
   /* USER CODE BEGIN RTOS_THREADS */
   /* add threads, ... */
@@ -395,20 +389,20 @@ static void MX_GPIO_Init(void)
 
 /* USER CODE END 4 */
 
-/* USER CODE BEGIN Header_StartIdleTask */
+/* USER CODE BEGIN Header_StartDefaultTask */
 /**
-  * @brief  Function implementing the idleTask thread.
-  * @param  argument: Not used
-  * @retval None
-  */
-/* USER CODE END Header_StartIdleTask */
-void StartIdleTask(void *argument)
+* @brief Function implementing the defaultTask thread.
+* @param argument: Not used
+* @retval None
+*/
+/* USER CODE END Header_StartDefaultTask */
+void StartDefaultTask(void *argument)
 {
   /* USER CODE BEGIN 5 */
   /* Infinite loop */
   for(;;)
   {
-    osDelay(1);
+      userDefaultTask(argument);
   }
   /* USER CODE END 5 */
 }
