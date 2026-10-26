@@ -5,8 +5,8 @@ project(Rear-VCU C CXX ASM)
 set(NODE_INCLUDES
         Core/Inc
         user/Inc
-        USB_DEVICE/App
-        USB_DEVICE/Target
+        USB_Device/App
+        USB_Device/Target
         Drivers/STM32G4xx_HAL_Driver/Inc
         Drivers/STM32G4xx_HAL_Driver/Inc/Legacy
         Drivers/CMSIS/Device/ST/STM32G4xx/Include
@@ -24,8 +24,8 @@ file(GLOB_RECURSE CUBEMX_SOURCES
         "Core/Src/*.cpp"
         "user/Src/*.c"
         "user/Src/*.cpp"
-        "USB_DEVICE/App/*.c"
-        "USB_DEVICE/Target/*.c"
+        "USB_Device/App/*.c"
+        "USB_Device/Target/*.c"
         "Drivers/STM32G4xx_HAL_Driver/Src/*.c"
         "Middlewares/Third_Party/FreeRTOS/Source/*.c"
         "Middlewares/Third_Party/FreeRTOS/Source/portable/GCC/ARM_CM4F/*.c"
@@ -72,10 +72,10 @@ target_compile_definitions(SolarGators_drivers PRIVATE
 )
 
 # 6. Linker Configuration & Target Link Options (in CubeMX folder)
-set(LINKER_SCRIPT "${CMAKE_CURRENT_SOURCE_DIR}/CubeMX/STM32G483RETX_FLASH.ld")
+set(LINKER_SCRIPT "${CMAKE_CURRENT_SOURCE_DIR}/CubeMX/STM32G483xx_FLASH.ld")
 
 if(NOT EXISTS "${LINKER_SCRIPT}")
-    file(GLOB LINKER_SCRIPT "${CMAKE_CURRENT_SOURCE_DIR}/CubeMX/*.ld")
+    file(GLOB LINKER_SCRIPT "${CMAKE_CURRENT_SOURCE_DIR}/CubeMX/*FLASH*.ld")
 endif()
 
 target_compile_options(${PROJECT_NAME}.elf PRIVATE
