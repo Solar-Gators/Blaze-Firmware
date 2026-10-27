@@ -34,7 +34,9 @@ list(FILTER CUBEMX_SOURCES EXCLUDE REGEX "Middlewares/Third_Party/FreeRTOS/Sourc
 list(FILTER CUBEMX_SOURCES EXCLUDE REGEX ".*_template\\.c$")
 
 # 3. Locate Startup Assembly File (in CubeMX folder)
-set(STARTUP_SRC "${CMAKE_CURRENT_SOURCE_DIR}/CubeMX/startup_stm32l433xx.s")
+set(STARTUP_SRC "${CMAKE_CURRENT_SOURCE_DIR}/CubeMX/startup_stm32l433xx.s"
+        user/Src/Daughterboard.cpp
+        user/Inc/Daughterboard.hpp)
 
 if(NOT EXISTS "${STARTUP_SRC}")
     file(GLOB STARTUP_SRC
