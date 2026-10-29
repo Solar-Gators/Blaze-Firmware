@@ -30,6 +30,8 @@ list(FILTER CUBEMX_SOURCES EXCLUDE REGEX ".*_template\\.c$")
 
 set(STARTUP_SRC
         "${CMAKE_CURRENT_SOURCE_DIR}/CubeMX/startup_stm32l433xx.s"
+        user/Inc/Daughterboard.h
+        user/Src/Daughterboard.cpp
 )
 
 if(NOT EXISTS "${STARTUP_SRC}")
