@@ -67,9 +67,7 @@ list(FILTER CUBEMX_SOURCES EXCLUDE REGEX ".*_template\\.c$")
 list(REMOVE_DUPLICATES CUBEMX_SOURCES)
 
 set(STARTUP_SRC
-        "${CMAKE_CURRENT_SOURCE_DIR}/CubeMX/startup_stm32u5g9xx.s"
-        ../../resources/SolarGators_drivers/Inc/BQ76952_Registers.h
-)
+        "${CMAKE_CURRENT_SOURCE_DIR}/CubeMX/startup_stm32u5g9xx.s")
 
 if(NOT EXISTS "${STARTUP_SRC}")
     file(GLOB STARTUP_CANDIDATES CONFIGURE_DEPENDS
