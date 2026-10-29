@@ -1,0 +1,8 @@
+//
+// Created by ahmed on 10/28/2026.
+//
+
+#ifndef BLAZEFIRMWARE_BQ76952_H
+#define BLAZEFIRMWARE_BQ76952_H
+
+#endif  //BLAZEFIRMWARE_BQ76952_H

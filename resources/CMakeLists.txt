@@ -1,12 +1,12 @@
 cmake_minimum_required(VERSION 3.20)
 project(SolarGators_drivers C CXX)
 
+set(DRV_ROOT "${CMAKE_CURRENT_SOURCE_DIR}/SolarGators_drivers")
+
 # 1. Collect all driver source files inside resources/
-file(GLOB_RECURSE DRIVER_SOURCES
-        "${CMAKE_CURRENT_SOURCE_DIR}/src/*.c"
-        "${CMAKE_CURRENT_SOURCE_DIR}/src/*.cpp"
-        "${CMAKE_CURRENT_SOURCE_DIR}/Drivers/*.c"
-        "${CMAKE_CURRENT_SOURCE_DIR}/Drivers/*.cpp"
+file(GLOB_RECURSE DRIVER_SOURCES CONFIGURE_DEPENDS
+        "${DRV_ROOT}/src/*.c"
+        "${DRV_ROOT}/src/*.cpp"
 )
 
 # 2. Prevent CMake error if resources/src/ is currently empty or contains no sources
@@ -16,7 +16,10 @@ if(NOT DRIVER_SOURCES)
     if(NOT EXISTS "${DUMMY_SRC}")
         file(WRITE "${DUMMY_SRC}" "/* Placeholder source file for SolarGators_drivers library */\n")
     endif()
-    set(DRIVER_SOURCES "${DUMMY_SRC}")
+    set(DRIVER_SOURCES "${DUMMY_SRC}"
+            SolarGators_drivers/Src/BQ76952.cpp
+            SolarGators_drivers/Inc/BQ76952.hpp
+    )
 endif()
 
 # 3. Define the Static Central Drivers Library
@@ -32,6 +35,5 @@ target_compile_options(SolarGators_drivers PRIVATE
 # 4. Export Include Directories
 # PUBLIC headers are exposed to any node (e.g., Front-VCU) linking against this library
 target_include_directories(SolarGators_drivers PUBLIC
-        "${CMAKE_CURRENT_SOURCE_DIR}/inc"
-        "${CMAKE_CURRENT_SOURCE_DIR}/Drivers"
+        "${DRV_ROOT}/Inc"
 )
