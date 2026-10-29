@@ -13,3 +13,13 @@ void userDefaultTask(void* argument)
         osDelay(1);
     }
 }
+
+void userLoggingTask(void* argument)
+{
+    (void)argument;
+
+    for (;;)
+    {
+        osDelay(1);
+    }
+}

@@ -11,6 +11,9 @@ set(NODE_INCLUDES
         Middlewares/Third_Party/FreeRTOS/Source/include
         Middlewares/Third_Party/FreeRTOS/Source/portable/GCC/ARM_CM4F
         Middlewares/Third_Party/FreeRTOS/Source/CMSIS_RTOS_V2
+        FATFS/App
+        FATFS/Target
+        Middlewares/Third_Party/FatFs/src
 )
 
 file(GLOB_RECURSE CUBEMX_SOURCES CONFIGURE_DEPENDS
@@ -20,6 +23,15 @@ file(GLOB_RECURSE CUBEMX_SOURCES CONFIGURE_DEPENDS
         "user/Src/*.cpp"
         "Drivers/STM32G4xx_HAL_Driver/Src/*.c"
         "Middlewares/Third_Party/FreeRTOS/Source/*.c"
+        "FATFS/App/*.c"
+        "FATFS/Target/*.c"
+)
+
+list(APPEND CUBEMX_SOURCES
+        Middlewares/Third_Party/FatFs/src/ff.c
+        Middlewares/Third_Party/FatFs/src/diskio.c
+        Middlewares/Third_Party/FatFs/src/ff_gen_drv.c
+        Middlewares/Third_Party/FatFs/src/option/syscall.c
 )
 
 list(FILTER CUBEMX_SOURCES EXCLUDE REGEX
