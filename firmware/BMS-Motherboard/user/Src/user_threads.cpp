@@ -16,7 +16,7 @@ void userDefaultTask(void* argument)
 
 void userLoggingTask(void* argument)
 {
-    (void)argument;
+    (void) argument;
 
     for (;;)
     {
