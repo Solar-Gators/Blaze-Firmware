@@ -1,64 +1,84 @@
 # Rear Vehicle Control Unit
 
-Project directory for Blaze's rear vehicle control unit.
+Firmware project for Blaze's rear VCU.
 
-[Back to the repository overview](../../README.md)
+[Repository overview](../../README.md)
 
-## Current Status
+## Configuration
 
-This directory currently contains only `CMakeLists.txt`.
-
-It does not contain application sources, a CubeMX project, startup assembly,
-or a linker script. The project is disabled in the top-level CMake configuration.
-
-## Hardware and Software Configuration
-
-| Item | Status |
+| Item | Configuration |
 |---|---|
-| MCU | Not confirmed |
-| Board revision | Not documented |
-| Schematics | Not documented |
-| CubeMX project | Not present |
-| RTOS | Not confirmed |
-| Declared CMake target | `Rear-VCU.elf` |
+| MCU | STM32G483RET6 |
+| CubeMX project | `Rear-VCU.ioc` |
+| STM32 firmware package | STM32Cube FW_G4 V1.6.3 |
+| CubeMX output toolchain | Makefile |
+| Repository build | CMake and Arm GCC |
+| RTOS interface | CMSIS-RTOS2 over FreeRTOS |
+| CMake target | `Rear-VCU.elf` |
 
-The CMake scaffold references STM32G4, `STM32G483xx`, and FreeRTOS paths.
-These references do not establish the final hardware or software selection.
+Board revision, schematic reference, and final control responsibilities are
+not documented here.
 
-## Functional Responsibilities
+## Current Implementation
 
-Not yet documented.
+The project contains generated peripheral initialization, GCC startup and
+linker files, FreeRTOS support, and USB device middleware.
+
+The application creates `defaultTask`.
+
+`StartDefaultTask()` initializes the USB device stack and calls
+`userDefaultTask()`. The user function currently loops with `osDelay(1)`.
+
+The USB device sources include CDC support. This does not establish a tested
+USB connection or an application-level USB protocol.
+
+Vehicle-control behavior is not implemented in the placeholder user task.
 
 ## Directory Layout
 
 ```text
 Rear-VCU/
-└── CMakeLists.txt
+├── Core/
+├── CubeMX/
+├── Drivers/
+├── Middlewares/
+├── USB_Device/
+│   ├── App/
+│   └── Target/
+├── user/
+│   ├── Inc/
+│   └── Src/
+├── CMakeLists.txt
+└── Rear-VCU.ioc
 ```
 
 ## Building
 
-There is no complete firmware project to build.
+The project is enabled in the top-level build.
 
-The target is not available through the current top-level configuration.
-Enabling its `add_subdirectory()` entry without adding the required sources
-and startup files will trigger the scaffold's missing-source error.
+From the repository root:
 
-Before enabling this project:
+```sh
+cmake --preset debug
+cmake --build --preset debug --target Rear-VCU.elf
+```
 
-1. Confirm the hardware and MCU.
-2. Add the matching project configuration and application sources.
-3. Supply startup assembly and a linker script for the selected compiler.
-4. Update source paths, include paths, MCU definitions, and compiler options.
-5. Establish a successful build and document the result.
+For Release, replace `debug` with `release` in both commands.
 
-See the [environment setup guide](../../docs/guides/environment-setup.md).
+Outputs are generated under `build/<preset>/firmware/Rear-VCU/`.
+
+## Development
+
+Keep application logic under `user/`. Preserve generated-file changes inside
+the appropriate `USER CODE` sections.
+
+- [CubeMX workflow](../../docs/guides/cubemx-workflow.md)
+- [Adding threads](../../docs/guides/adding-threads.md)
 
 ## Information Still Needed
 
-- Hardware selection and schematic reference
-- Functional responsibilities
-- Peripheral and pin assignments
-- Communication interfaces
-- RTOS or main-loop design
-- Build, programming, and test procedure
+- Board revision and schematic reference
+- Peripheral assignments and attached devices
+- Vehicle-control responsibilities
+- Communication protocols and timeout behavior
+- Validated USB, programming, and bench-test procedures

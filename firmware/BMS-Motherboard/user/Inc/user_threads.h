@@ -12,6 +12,8 @@ extern "C"
 
     void userDefaultTask(void* argument);
 
+    void userLoggingTask(void* argument);
+
 #ifdef __cplusplus
 }
 #endif
