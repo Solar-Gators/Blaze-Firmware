@@ -1,0 +1,8 @@
+//
+// Created by charl on 10/29/2026.
+//
+
+#ifndef BLAZEFIRMWARE_POWER_BOARD_H
+#define BLAZEFIRMWARE_POWER_BOARD_H
+
+#endif  //BLAZEFIRMWARE_POWER_BOARD_H
