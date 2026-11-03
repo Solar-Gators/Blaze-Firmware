@@ -138,21 +138,6 @@ HAL_StatusTypeDef BQ76952::ReadVoltages()
     return HAL_OK;
 }
 
-HAL_StatusTypeDef BQ76952::ReadCurrent()
-{
-    HAL_StatusTypeDef status;
-
-    int16_t current = 0;  // this value is in userA, where 1 userA = 1 mA by default
-    status = DirectReadI2(BQ769X2_CMD_CURRENT_CC2, &current);
-
-    if (status != HAL_OK)
-        return status;
-
-    pack_current_ = current;  // in mA
-
-    return status;
-}
-
 HAL_StatusTypeDef BQ76952::ReadSafetyFaults()
 {
     HAL_StatusTypeDef status = ReadBytes(BQ769X2_CMD_SAFETY_ALERT_A, &stat_a_byte, 1);
@@ -199,7 +184,7 @@ HAL_StatusTypeDef BQ76952::ExitDeepSleep()
 
 int16_t BQ76952::GetCellVoltage(uint32_t cell_num) const
 {
-    if (cell_num > 16)
+    if (cell_num > 12)
     {
         return INT16_MIN;
     }

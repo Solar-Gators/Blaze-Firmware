@@ -161,11 +161,7 @@ void SysTick_Handler(void)
   /* USER CODE BEGIN SysTick_IRQn 0 */
 
   /* USER CODE END SysTick_IRQn 0 */
-  /* Explicitly clear COUNTFLAG to avoid timing jitter in CMSIS-RTOS V2 */
-#if (configUSE_TICKLESS_IDLE == 0)
-  (void)SysTick->CTRL;
-#endif
-HAL_IncTick();
+  HAL_IncTick();
 #if (INCLUDE_xTaskGetSchedulerState == 1 )
   if (xTaskGetSchedulerState() != taskSCHEDULER_NOT_STARTED)
   {
