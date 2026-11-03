@@ -5,17 +5,27 @@
 #ifndef BLAZEFIRMWARE_BQ76952_H
 #define BLAZEFIRMWARE_BQ76952_H
 
-#include <cmath>
+#include <cstddef>
+#include <cstdint>
 
-#include <main.h>
+#if defined(STM32L433xx)
+#include "stm32l4xx_hal.h"
+#elif defined(STM32G483xx) || defined(STM32G473xx)
+#include "stm32g4xx_hal.h"
+#elif defined(STM32U5G9xx)
+#include "stm32u5xx_hal.h"
+#endif
+
+// HAL_I2C_MODULE_ENABLED comes from the board's *_hal_conf.h (CubeMX I2C enabled)
+#if defined(HAL_I2C_MODULE_ENABLED)
+#define BQ76952_AVAILABLE 1
+#else
+#define BQ76952_AVAILABLE 0
+#endif
 
 #include "BQ769X2_Registers.h"
 
-#ifdef STM32L433xx
-#include "stm32l4xx_hal.h"
-#else
-#error "BQ driver only for L4 !!"
-#endif
+#if BQ76952_AVAILABLE
 
 #define BQ_I2C_ADDR_WRITE 0x10
 #define BQ_I2C_ADDR_READ 0x11
@@ -111,5 +121,7 @@ class BQ76952
     bool auto_bal_relax_enabled_ = false;
     bool auto_bal_sleep_enabled_ = false;
 };
+
+#endif
 
 #endif  //BLAZEFIRMWARE_BQ76952_H

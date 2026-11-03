@@ -4,6 +4,8 @@
 
 #include "BQ76952.hpp"
 
+#if BQ76952_AVAILABLE
+
 #include <cstring>
 
 #ifndef BQ76952_
@@ -17,7 +19,11 @@ HAL_StatusTypeDef BQ76952::Init(I2C_HandleTypeDef *hi2c, const uint8_t i2cAddres
     i2cAddressWrite = i2cAddress;
     i2cAddressRead = i2cAddress + 1;
 
-    Reset();
+    HAL_StatusTypeDef status = Reset();
+    if (status != HAL_OK)
+    {
+        return status;
+    }
     volatile uint32_t delay = 100000;
     while (delay--)
         ;
@@ -564,5 +570,7 @@ HAL_StatusTypeDef BQ76952::UpdateMode()
     current_mode_ = BQ_MODE_NORMAL;
     return status;
 }
+
+#endif
 
 #endif
