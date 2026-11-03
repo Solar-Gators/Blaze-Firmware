@@ -10,7 +10,10 @@ extern "C"
 {
 #endif
 
-    void userStartCellCheck(void* argument);
+    void userStartVoltagesCheck(void* argument);
+    void userStartTempsCheck(void* argument);
+    void userStartCANMessages(void* argument);
+    void userStartDefaultTask(void* argument);
 
 #ifdef __cplusplus
 }

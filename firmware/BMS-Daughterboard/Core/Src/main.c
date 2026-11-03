@@ -26,7 +26,6 @@
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
-typedef StaticTask_t osStaticThreadDef_t;
 /* USER CODE BEGIN PTD */
 
 /* USER CODE END PTD */
@@ -52,26 +51,30 @@ SPI_HandleTypeDef hspi3;
 
 /* Definitions for defaultTask */
 osThreadId_t defaultTaskHandle;
-uint32_t defaultTaskBuffer[ 128 ];
-osStaticThreadDef_t defaultTaskControlBlock;
 const osThreadAttr_t defaultTask_attributes = {
   .name = "defaultTask",
-  .cb_mem = &defaultTaskControlBlock,
-  .cb_size = sizeof(defaultTaskControlBlock),
-  .stack_mem = &defaultTaskBuffer[0],
-  .stack_size = sizeof(defaultTaskBuffer),
+  .stack_size = 128 * 4,
   .priority = (osPriority_t) osPriorityNormal,
 };
-/* Definitions for CellCheck */
-osThreadId_t CellCheckHandle;
-uint32_t CellCheckBuffer[ 128 ];
-osStaticThreadDef_t CellCheckControlBlock;
-const osThreadAttr_t CellCheck_attributes = {
-  .name = "CellCheck",
-  .cb_mem = &CellCheckControlBlock,
-  .cb_size = sizeof(CellCheckControlBlock),
-  .stack_mem = &CellCheckBuffer[0],
-  .stack_size = sizeof(CellCheckBuffer),
+/* Definitions for CheckVoltages */
+osThreadId_t CheckVoltagesHandle;
+const osThreadAttr_t CheckVoltages_attributes = {
+  .name = "CheckVoltages",
+  .stack_size = 128 * 4,
+  .priority = (osPriority_t) osPriorityHigh3,
+};
+/* Definitions for CheckTemps */
+osThreadId_t CheckTempsHandle;
+const osThreadAttr_t CheckTemps_attributes = {
+  .name = "CheckTemps",
+  .stack_size = 128 * 4,
+  .priority = (osPriority_t) osPriorityHigh2,
+};
+/* Definitions for CANMessages */
+osThreadId_t CANMessagesHandle;
+const osThreadAttr_t CANMessages_attributes = {
+  .name = "CANMessages",
+  .stack_size = 128 * 4,
   .priority = (osPriority_t) osPriorityHigh,
 };
 /* USER CODE BEGIN PV */
@@ -86,7 +89,9 @@ static void MX_CAN1_Init(void);
 static void MX_I2C2_Init(void);
 static void MX_SPI3_Init(void);
 void StartDefaultTask(void *argument);
-void StartCellCheck(void *argument);
+void CheckVoltagesCheck(void *argument);
+void StartTask03(void *argument);
+void StartTask04(void *argument);
 
 /* USER CODE BEGIN PFP */
 
@@ -157,8 +162,14 @@ int main(void)
   /* creation of defaultTask */
   defaultTaskHandle = osThreadNew(StartDefaultTask, NULL, &defaultTask_attributes);
 
-  /* creation of CellCheck */
-  CellCheckHandle = osThreadNew(StartCellCheck, NULL, &CellCheck_attributes);
+  /* creation of CheckVoltages */
+  CheckVoltagesHandle = osThreadNew(CheckVoltagesCheck, NULL, &CheckVoltages_attributes);
+
+  /* creation of CheckTemps */
+  CheckTempsHandle = osThreadNew(StartTask03, NULL, &CheckTemps_attributes);
+
+  /* creation of CANMessages */
+  CANMessagesHandle = osThreadNew(StartTask04, NULL, &CANMessages_attributes);
 
   /* USER CODE BEGIN RTOS_THREADS */
   /* add threads, ... */
@@ -489,22 +500,58 @@ void StartDefaultTask(void *argument)
   /* USER CODE END 5 */
 }
 
-/* USER CODE BEGIN Header_StartCellCheck */
+/* USER CODE BEGIN Header_CheckVoltagesCheck */
 /**
-* @brief Function implementing the CellCheck thread.
+* @brief Function implementing the CheckVoltages thread.
 * @param argument: Not used
 * @retval None
 */
-/* USER CODE END Header_StartCellCheck */
-void StartCellCheck(void *argument)
+/* USER CODE END Header_CheckVoltagesCheck */
+void CheckVoltagesCheck(void *argument)
 {
-  /* USER CODE BEGIN StartCellCheck */
+  /* USER CODE BEGIN CheckVoltagesCheck */
   /* Infinite loop */
   for(;;)
   {
-    userStartCellCheck(argument);
+    osDelay(1);
   }
-  /* USER CODE END StartCellCheck */
+  /* USER CODE END CheckVoltagesCheck */
+}
+
+/* USER CODE BEGIN Header_StartTask03 */
+/**
+* @brief Function implementing the CheckTemps thread.
+* @param argument: Not used
+* @retval None
+*/
+/* USER CODE END Header_StartTask03 */
+void StartTask03(void *argument)
+{
+  /* USER CODE BEGIN StartTask03 */
+  /* Infinite loop */
+  for(;;)
+  {
+    osDelay(1);
+  }
+  /* USER CODE END StartTask03 */
+}
+
+/* USER CODE BEGIN Header_StartTask04 */
+/**
+* @brief Function implementing the CANMessages thread.
+* @param argument: Not used
+* @retval None
+*/
+/* USER CODE END Header_StartTask04 */
+void StartTask04(void *argument)
+{
+  /* USER CODE BEGIN StartTask04 */
+  /* Infinite loop */
+  for(;;)
+  {
+    osDelay(1);
+  }
+  /* USER CODE END StartTask04 */
 }
 
 /**

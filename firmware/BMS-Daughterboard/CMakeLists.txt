@@ -29,8 +29,7 @@ list(FILTER CUBEMX_SOURCES EXCLUDE REGEX
 list(FILTER CUBEMX_SOURCES EXCLUDE REGEX ".*_template\\.c$")
 
 set(STARTUP_SRC
-        "${CMAKE_CURRENT_SOURCE_DIR}/CubeMX/startup_stm32l433xx.s"
-)
+        "${CMAKE_CURRENT_SOURCE_DIR}/CubeMX/startup_stm32l433xx.s")
 
 if(NOT EXISTS "${STARTUP_SRC}")
     file(GLOB STARTUP_SRC
