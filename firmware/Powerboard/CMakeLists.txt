@@ -34,7 +34,11 @@ list(FILTER CUBEMX_SOURCES EXCLUDE REGEX "Middlewares/Third_Party/FreeRTOS/Sourc
 list(FILTER CUBEMX_SOURCES EXCLUDE REGEX ".*_template\\.c$")
 
 # 3. Locate Startup Assembly File (in CubeMX folder)
-set(STARTUP_SRC "${CMAKE_CURRENT_SOURCE_DIR}/CubeMX/startup_stm32l433xx.s")
+set(STARTUP_SRC "${CMAKE_CURRENT_SOURCE_DIR}/CubeMX/startup_stm32l433xx.s"
+        ../../resources/SolarGators_drivers/Src/ina226.cpp
+        user/Src/powerboard.h
+        user/Inc/powerboard.h
+        user/Inc/powerboard.h)
 
 if(NOT EXISTS "${STARTUP_SRC}")
     file(GLOB STARTUP_SRC
