@@ -21,7 +21,4 @@ void bmsdaughter::getCellTemp() {}
 
 void bmsdaughter::sendBalancingCommand() {}
 
-void bmsdaughter::sendStatusMessage()
-{
-
-}
+void bmsdaughter::sendStatusMessage() {}
