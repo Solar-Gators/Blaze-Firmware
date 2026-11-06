@@ -8,4 +8,15 @@
 #include "BQ76952.hpp"
 #include "BQ769X2_Registers.h"
 
+namespace bmsdaughter
+{
+
+void init();
+void getCellVoltage();
+void getCellTemp();
+void sendBalancingCommand();
+void sendStatusMessage();
+
+}  // namespace bmsdaughter
+
 #endif  //BLAZEFIRMWARE_DAUGHTERBOARD_H

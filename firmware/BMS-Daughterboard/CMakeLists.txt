@@ -31,16 +31,16 @@ list(FILTER CUBEMX_SOURCES EXCLUDE REGEX ".*_template\\.c$")
 set(STARTUP_SRC
         "${CMAKE_CURRENT_SOURCE_DIR}/CubeMX/startup_stm32l433xx.s")
 
-if(NOT EXISTS "${STARTUP_SRC}")
+if (NOT EXISTS "${STARTUP_SRC}")
     file(GLOB STARTUP_SRC
             "${CMAKE_CURRENT_SOURCE_DIR}/CubeMX/startup_*.s"
             "${CMAKE_CURRENT_SOURCE_DIR}/CubeMX/startup_*.S"
     )
-endif()
+endif ()
 
-if(NOT CUBEMX_SOURCES OR NOT STARTUP_SRC)
+if (NOT CUBEMX_SOURCES OR NOT STARTUP_SRC)
     message(FATAL_ERROR "Missing application sources or startup assembly for ${PROJECT_NAME}")
-endif()
+endif ()
 
 add_executable(${PROJECT_NAME}.elf ${CUBEMX_SOURCES} ${STARTUP_SRC})
 
@@ -59,17 +59,17 @@ target_compile_options(${PROJECT_NAME}.elf PRIVATE
 )
 
 set(LINKER_SCRIPT
-        "${CMAKE_CURRENT_SOURCE_DIR}/CubeMX/STM32L433CCUX_FLASH.ld"
+        "${CMAKE_CURRENT_SOURCE_DIR}/CubeMX/STM32L433CCTx_FLASH.ld"
 )
 
-if(NOT EXISTS "${LINKER_SCRIPT}")
+if (NOT EXISTS "${LINKER_SCRIPT}")
     file(GLOB LINKER_SCRIPT "${CMAKE_CURRENT_SOURCE_DIR}/CubeMX/*.ld")
-endif()
+endif ()
 
 list(LENGTH LINKER_SCRIPT LINKER_SCRIPT_COUNT)
-if(NOT LINKER_SCRIPT_COUNT EQUAL 1)
+if (NOT LINKER_SCRIPT_COUNT EQUAL 1)
     message(FATAL_ERROR "Expected one linker script for ${PROJECT_NAME}")
-endif()
+endif ()
 
 target_link_options(${PROJECT_NAME}.elf PRIVATE
         -mcpu=cortex-m4

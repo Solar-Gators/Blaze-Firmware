@@ -90,8 +90,8 @@ static void MX_I2C2_Init(void);
 static void MX_SPI3_Init(void);
 void StartDefaultTask(void *argument);
 void CheckVoltagesCheck(void *argument);
-void StartTask03(void *argument);
-void StartTask04(void *argument);
+void CheckTemp(void *argument);
+void CANMessage(void *argument);
 
 /* USER CODE BEGIN PFP */
 
@@ -166,10 +166,10 @@ int main(void)
   CheckVoltagesHandle = osThreadNew(CheckVoltagesCheck, NULL, &CheckVoltages_attributes);
 
   /* creation of CheckTemps */
-  CheckTempsHandle = osThreadNew(StartTask03, NULL, &CheckTemps_attributes);
+  CheckTempsHandle = osThreadNew(CheckTemp, NULL, &CheckTemps_attributes);
 
   /* creation of CANMessages */
-  CANMessagesHandle = osThreadNew(StartTask04, NULL, &CANMessages_attributes);
+  CANMessagesHandle = osThreadNew(CANMessage, NULL, &CANMessages_attributes);
 
   /* USER CODE BEGIN RTOS_THREADS */
   /* add threads, ... */
@@ -518,40 +518,40 @@ void CheckVoltagesCheck(void *argument)
   /* USER CODE END CheckVoltagesCheck */
 }
 
-/* USER CODE BEGIN Header_StartTask03 */
+/* USER CODE BEGIN Header_CheckTemp */
 /**
 * @brief Function implementing the CheckTemps thread.
 * @param argument: Not used
 * @retval None
 */
-/* USER CODE END Header_StartTask03 */
-void StartTask03(void *argument)
+/* USER CODE END Header_CheckTemp */
+void CheckTemp(void *argument)
 {
-  /* USER CODE BEGIN StartTask03 */
+  /* USER CODE BEGIN CheckTemp */
   /* Infinite loop */
   for(;;)
   {
     osDelay(1);
   }
-  /* USER CODE END StartTask03 */
+  /* USER CODE END CheckTemp */
 }
 
-/* USER CODE BEGIN Header_StartTask04 */
+/* USER CODE BEGIN Header_CANMessage */
 /**
 * @brief Function implementing the CANMessages thread.
 * @param argument: Not used
 * @retval None
 */
-/* USER CODE END Header_StartTask04 */
-void StartTask04(void *argument)
+/* USER CODE END Header_CANMessage */
+void CANMessage(void *argument)
 {
-  /* USER CODE BEGIN StartTask04 */
+  /* USER CODE BEGIN CANMessage */
   /* Infinite loop */
   for(;;)
   {
     osDelay(1);
   }
-  /* USER CODE END StartTask04 */
+  /* USER CODE END CANMessage */
 }
 
 /**
