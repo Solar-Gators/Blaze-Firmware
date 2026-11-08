@@ -14,35 +14,20 @@ function(add_solargators_drivers firmware_target)
         message(FATAL_ERROR "No driver sources found in ${DRV_ROOT}/Src")
     endif()
 
-    # Use a unique INTERFACE target name per board so it doesn't collide globally
     set(driver_target "${firmware_target}_drivers_interface")
 
     if(NOT TARGET ${driver_target})
         add_library(${driver_target} INTERFACE)
 
-        # Attach sources and public include directories to the interface
-        target_sources(${driver_target} INTERFACE ${DRIVER_SOURCES})
+        target_sources(${driver_target} INTERFACE
+                ${DRIVER_SOURCES}
+        )
+
         target_include_directories(${driver_target} INTERFACE
                 "${DRV_ROOT}/Inc"
         )
     endif()
 
-    # Link the interface to the board target.
-    # Because it's an INTERFACE library, its sources compile straight into the board executable!
+    # Driver sources compile inside the board executable using its settings.
     target_link_libraries(${firmware_target} PRIVATE ${driver_target})
-
-    # Inherit the board's include directories, compile definitions, and options
-    foreach(property IN ITEMS
-            INCLUDE_DIRECTORIES
-            COMPILE_DEFINITIONS
-            COMPILE_OPTIONS
-    )
-        get_target_property(board_value ${firmware_target} ${property})
-
-        if(board_value)
-            set_property(TARGET ${driver_target}
-                    APPEND PROPERTY INTERFACE_${property} "${board_value}"
-            )
-        endif()
-    endforeach()
 endfunction()
