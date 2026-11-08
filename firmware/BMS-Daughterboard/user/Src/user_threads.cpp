@@ -6,7 +6,32 @@
 
 #include "cmsis_os.h"
 
-void userStartCellCheck(void* argument)
+void userStartVoltagesCheck(void* argument)
+{
+    for (;;)
+    {
+        osDelay(1);
+    }
+}
+
+void userStartTempsCheck(void* argument)
+{
+    for (;;)
+    {
+        osDelay(1);
+    }
+}
+
+void userStartCANMessages(void* argument)
+{
+    for (;;)
+    {
+        osDelay(1);
+    }
+}
+
+void userStartDefaultTask(void* argument)
+
 {
     for (;;)
     {
