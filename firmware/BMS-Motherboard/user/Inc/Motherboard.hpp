@@ -1,0 +1,8 @@
+//
+// Created by ahmed on 10/27/2026.
+//
+
+#ifndef BLAZEFIRMWARE_MOTHERBOARD_H
+#define BLAZEFIRMWARE_MOTHERBOARD_H
+
+#endif  //BLAZEFIRMWARE_MOTHERBOARD_H
