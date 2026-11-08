@@ -1,0 +1,8 @@
+//
+// Created by r3car on 11/7/2026.
+//
+
+#ifndef BLAZEFIRMWARE_TELEMETRY_H
+#define BLAZEFIRMWARE_TELEMETRY_H
+
+#endif //BLAZEFIRMWARE_TELEMETRY_H

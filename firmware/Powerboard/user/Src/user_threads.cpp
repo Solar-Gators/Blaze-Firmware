@@ -3,6 +3,7 @@
 //
 
 #include "user_threads.h"
+#include "powerboard.h"
 
 #include "cmsis_os.h"
 
