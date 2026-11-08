@@ -43,3 +43,6 @@ mx.scratch
 # Include STM32CubeMX Drivers & Middlewares
 !firmware/**/Drivers/
 !firmware/**/Middlewares/
+
+# macOS Garbage
+.DS_Store
