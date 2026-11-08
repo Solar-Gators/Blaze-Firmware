@@ -14,29 +14,20 @@ function(add_solargators_drivers firmware_target)
         message(FATAL_ERROR "No driver sources found in ${DRV_ROOT}/Src")
     endif()
 
-    set(driver_target "${firmware_target}_drivers")
+    set(driver_target "${firmware_target}_drivers_interface")
 
-    add_library(${driver_target} STATIC ${DRIVER_SOURCES})
+    if(NOT TARGET ${driver_target})
+        add_library(${driver_target} INTERFACE)
 
-    # Compile this library with this board's settings only.
-    foreach(property IN ITEMS
-            INCLUDE_DIRECTORIES
-            COMPILE_DEFINITIONS
-            COMPILE_OPTIONS
-    )
-        get_target_property(board_value ${firmware_target} ${property})
+        target_sources(${driver_target} INTERFACE
+                ${DRIVER_SOURCES}
+        )
 
-        if(board_value)
-            set_property(TARGET ${driver_target}
-                    APPEND PROPERTY ${property} "${board_value}"
-            )
-        endif()
-    endforeach()
+        target_include_directories(${driver_target} INTERFACE
+                "${DRV_ROOT}/Inc"
+        )
+    endif()
 
-    # Make shared headers available to the library and its board.
-    target_include_directories(${driver_target} PUBLIC
-            "${DRV_ROOT}/Inc"
-    )
-
+    # Driver sources compile inside the board executable using its settings.
     target_link_libraries(${firmware_target} PRIVATE ${driver_target})
 endfunction()

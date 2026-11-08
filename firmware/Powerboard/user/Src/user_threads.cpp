@@ -6,6 +6,8 @@
 
 #include "cmsis_os.h"
 
+#include "powerboard.h"
+
 void userDefaultTask(void* argument)
 {
     for (;;)
