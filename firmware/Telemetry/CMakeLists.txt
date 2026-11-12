@@ -29,6 +29,8 @@ list(FILTER CUBEMX_SOURCES EXCLUDE REGEX ".*_template\\.c$")
 
 set(STARTUP_SRC
         "${CMAKE_CURRENT_SOURCE_DIR}/CubeMX/startup_stm32g483xx.s"
+        user/Inc/telemetry_state.h
+        user/Inc/telemetry_state.h
 )
 
 if(NOT EXISTS "${STARTUP_SRC}")
