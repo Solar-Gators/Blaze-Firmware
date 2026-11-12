@@ -29,6 +29,7 @@ list(FILTER CUBEMX_SOURCES EXCLUDE REGEX ".*_template\\.c$")
 
 set(STARTUP_SRC
         "${CMAKE_CURRENT_SOURCE_DIR}/CubeMX/startup_stm32g483xx.s"
+        ../BMS-Motherboard/Core/Src/CurrentSenseDrivers.c
 )
 
 if(NOT EXISTS "${STARTUP_SRC}")
