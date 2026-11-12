@@ -181,7 +181,7 @@ ProjectManager.ProjectStructure=
 ProjectManager.RegisterCallBack=
 ProjectManager.StackSize=0x400
 ProjectManager.TargetToolchain=Makefile
-ProjectManager.ToolChainLocation=
+ProjectManager.ToolChainLocation=CubeMXProjectManager.UAScriptAfterPath\=
 ProjectManager.UAScriptAfterPath=
 ProjectManager.UAScriptBeforePath=
 ProjectManager.UnderRoot=false
