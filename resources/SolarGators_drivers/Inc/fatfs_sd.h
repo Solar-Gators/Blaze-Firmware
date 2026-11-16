@@ -28,13 +28,13 @@ extern "C"
 {
 #endif
 
-  void SD_disk_config(SPI_HandleTypeDef *hspi, GPIO_TypeDef *csPort, uint16_t csPin);
+    void SD_disk_config(SPI_HandleTypeDef *hspi, GPIO_TypeDef *csPort, uint16_t csPin);
 
-  DSTATUS SD_disk_initialize(BYTE pdrv);
-  DSTATUS SD_disk_status(BYTE pdrv);
-  DRESULT SD_disk_read(BYTE pdrv, BYTE *buff, DWORD sector, UINT count);
-  DRESULT SD_disk_write(BYTE pdrv, const BYTE *buff, DWORD sector, UINT count);
-  DRESULT SD_disk_ioctl(BYTE pdrv, BYTE cmd, void *buff);
+    DSTATUS SD_disk_initialize(BYTE pdrv);
+    DSTATUS SD_disk_status(BYTE pdrv);
+    DRESULT SD_disk_read(BYTE pdrv, BYTE *buff, DWORD sector, UINT count);
+    DRESULT SD_disk_write(BYTE pdrv, const BYTE *buff, DWORD sector, UINT count);
+    DRESULT SD_disk_ioctl(BYTE pdrv, BYTE cmd, void *buff);
 
 #ifdef __cplusplus
 }
