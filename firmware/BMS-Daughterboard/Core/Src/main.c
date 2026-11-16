@@ -18,6 +18,7 @@
 /* USER CODE END Header */
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
+
 #include "cmsis_os.h"
 
 /* Private includes ----------------------------------------------------------*/
@@ -26,7 +27,6 @@
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
-typedef StaticTask_t osStaticThreadDef_t;
 /* USER CODE BEGIN PTD */
 
 /* USER CODE END PTD */
@@ -52,27 +52,31 @@ SPI_HandleTypeDef hspi3;
 
 /* Definitions for defaultTask */
 osThreadId_t defaultTaskHandle;
-uint32_t defaultTaskBuffer[ 128 ];
-osStaticThreadDef_t defaultTaskControlBlock;
 const osThreadAttr_t defaultTask_attributes = {
-  .name = "defaultTask",
-  .cb_mem = &defaultTaskControlBlock,
-  .cb_size = sizeof(defaultTaskControlBlock),
-  .stack_mem = &defaultTaskBuffer[0],
-  .stack_size = sizeof(defaultTaskBuffer),
-  .priority = (osPriority_t) osPriorityNormal,
+    .name = "defaultTask",
+    .stack_size = 128 * 4,
+    .priority = (osPriority_t) osPriorityNormal,
 };
-/* Definitions for CellCheck */
-osThreadId_t CellCheckHandle;
-uint32_t CellCheckBuffer[ 128 ];
-osStaticThreadDef_t CellCheckControlBlock;
-const osThreadAttr_t CellCheck_attributes = {
-  .name = "CellCheck",
-  .cb_mem = &CellCheckControlBlock,
-  .cb_size = sizeof(CellCheckControlBlock),
-  .stack_mem = &CellCheckBuffer[0],
-  .stack_size = sizeof(CellCheckBuffer),
-  .priority = (osPriority_t) osPriorityHigh,
+/* Definitions for CheckVoltages */
+osThreadId_t CheckVoltagesHandle;
+const osThreadAttr_t CheckVoltages_attributes = {
+    .name = "CheckVoltages",
+    .stack_size = 128 * 4,
+    .priority = (osPriority_t) osPriorityHigh3,
+};
+/* Definitions for CheckTemps */
+osThreadId_t CheckTempsHandle;
+const osThreadAttr_t CheckTemps_attributes = {
+    .name = "CheckTemps",
+    .stack_size = 128 * 4,
+    .priority = (osPriority_t) osPriorityHigh2,
+};
+/* Definitions for CANMessages */
+osThreadId_t CANMessagesHandle;
+const osThreadAttr_t CANMessages_attributes = {
+    .name = "CANMessages",
+    .stack_size = 128 * 4,
+    .priority = (osPriority_t) osPriorityHigh,
 };
 /* USER CODE BEGIN PV */
 
@@ -86,7 +90,9 @@ static void MX_CAN1_Init(void);
 static void MX_I2C2_Init(void);
 static void MX_SPI3_Init(void);
 void StartDefaultTask(void *argument);
-void StartCellCheck(void *argument);
+void CheckVoltagesCheck(void *argument);
+void CheckTemp(void *argument);
+void CANMessage(void *argument);
 
 /* USER CODE BEGIN PFP */
 
@@ -103,85 +109,90 @@ void StartCellCheck(void *argument);
   */
 int main(void)
 {
+    /* USER CODE BEGIN 1 */
 
-  /* USER CODE BEGIN 1 */
+    /* USER CODE END 1 */
 
-  /* USER CODE END 1 */
+    /* MCU Configuration--------------------------------------------------------*/
 
-  /* MCU Configuration--------------------------------------------------------*/
+    /* Reset of all peripherals, Initializes the Flash interface and the Systick. */
+    HAL_Init();
 
-  /* Reset of all peripherals, Initializes the Flash interface and the Systick. */
-  HAL_Init();
+    /* USER CODE BEGIN Init */
 
-  /* USER CODE BEGIN Init */
+    /* USER CODE END Init */
 
-  /* USER CODE END Init */
+    /* Configure the system clock */
+    SystemClock_Config();
 
-  /* Configure the system clock */
-  SystemClock_Config();
+    /* USER CODE BEGIN SysInit */
 
-  /* USER CODE BEGIN SysInit */
+    /* USER CODE END SysInit */
 
-  /* USER CODE END SysInit */
+    /* Initialize all configured peripherals */
+    MX_GPIO_Init();
+    MX_ADC1_Init();
+    MX_CAN1_Init();
+    MX_I2C2_Init();
+    MX_SPI3_Init();
+    /* USER CODE BEGIN 2 */
 
-  /* Initialize all configured peripherals */
-  MX_GPIO_Init();
-  MX_ADC1_Init();
-  MX_CAN1_Init();
-  MX_I2C2_Init();
-  MX_SPI3_Init();
-  /* USER CODE BEGIN 2 */
+    /* USER CODE END 2 */
 
-  /* USER CODE END 2 */
+    /* Init scheduler */
+    osKernelInitialize();
 
-  /* Init scheduler */
-  osKernelInitialize();
+    /* USER CODE BEGIN RTOS_MUTEX */
+    /* add mutexes, ... */
+    /* USER CODE END RTOS_MUTEX */
 
-  /* USER CODE BEGIN RTOS_MUTEX */
-  /* add mutexes, ... */
-  /* USER CODE END RTOS_MUTEX */
+    /* USER CODE BEGIN RTOS_SEMAPHORES */
+    /* add semaphores, ... */
+    /* USER CODE END RTOS_SEMAPHORES */
 
-  /* USER CODE BEGIN RTOS_SEMAPHORES */
-  /* add semaphores, ... */
-  /* USER CODE END RTOS_SEMAPHORES */
+    /* USER CODE BEGIN RTOS_TIMERS */
+    /* start timers, add new ones, ... */
+    /* USER CODE END RTOS_TIMERS */
 
-  /* USER CODE BEGIN RTOS_TIMERS */
-  /* start timers, add new ones, ... */
-  /* USER CODE END RTOS_TIMERS */
+    /* USER CODE BEGIN RTOS_QUEUES */
+    /* add queues, ... */
+    /* USER CODE END RTOS_QUEUES */
 
-  /* USER CODE BEGIN RTOS_QUEUES */
-  /* add queues, ... */
-  /* USER CODE END RTOS_QUEUES */
+    /* Create the thread(s) */
+    /* creation of defaultTask */
+    defaultTaskHandle = osThreadNew(StartDefaultTask, NULL, &defaultTask_attributes);
 
-  /* Create the thread(s) */
-  /* creation of defaultTask */
-  defaultTaskHandle = osThreadNew(StartDefaultTask, NULL, &defaultTask_attributes);
+    /* creation of CheckVoltages */
+    CheckVoltagesHandle = osThreadNew(CheckVoltagesCheck, NULL, &CheckVoltages_attributes);
 
-  /* creation of CellCheck */
-  CellCheckHandle = osThreadNew(StartCellCheck, NULL, &CellCheck_attributes);
+    /* creation of CheckTemps */
+    CheckTempsHandle = osThreadNew(CheckTemp, NULL, &CheckTemps_attributes);
 
-  /* USER CODE BEGIN RTOS_THREADS */
-  /* add threads, ... */
-  /* USER CODE END RTOS_THREADS */
+    /* creation of CANMessages */
+    CANMessagesHandle = osThreadNew(CANMessage, NULL, &CANMessages_attributes);
 
-  /* USER CODE BEGIN RTOS_EVENTS */
-  /* add events, ... */
-  /* USER CODE END RTOS_EVENTS */
+    /* USER CODE BEGIN RTOS_THREADS */
+    /* add threads, ... */
+    /* USER CODE END RTOS_THREADS */
 
-  /* Start scheduler */
-  osKernelStart();
+    /* USER CODE BEGIN RTOS_EVENTS */
+    /* add events, ... */
+    /* USER CODE END RTOS_EVENTS */
 
-  /* We should never get here as control is now taken by the scheduler */
+    /* Start scheduler */
+    osKernelStart();
 
-  /* Infinite loop */
-  /* USER CODE BEGIN WHILE */
-  while (1)
-  {
-    /* USER CODE END WHILE */
+    /* We should never get here as control is now taken by the scheduler */
 
-    /* USER CODE BEGIN 3 */
-  }
-  /* USER CODE END 3 */
+    /* Infinite loop */
+    /* USER CODE BEGIN WHILE */
+    while (1)
+    {
+        /* USER CODE END WHILE */
+
+        /* USER CODE BEGIN 3 */
+    }
+    /* USER CODE END 3 */
 }
 
 /**
@@ -190,52 +201,52 @@ int main(void)
   */
 void SystemClock_Config(void)
 {
-  RCC_OscInitTypeDef RCC_OscInitStruct = {0};
-  RCC_ClkInitTypeDef RCC_ClkInitStruct = {0};
+    RCC_OscInitTypeDef RCC_OscInitStruct = {0};
+    RCC_ClkInitTypeDef RCC_ClkInitStruct = {0};
 
-  /** Configure the main internal regulator output voltage
+    /** Configure the main internal regulator output voltage
   */
-  if (HAL_PWREx_ControlVoltageScaling(PWR_REGULATOR_VOLTAGE_SCALE1) != HAL_OK)
-  {
-    Error_Handler();
-  }
+    if (HAL_PWREx_ControlVoltageScaling(PWR_REGULATOR_VOLTAGE_SCALE1) != HAL_OK)
+    {
+        Error_Handler();
+    }
 
-  /** Configure LSE Drive Capability
+    /** Configure LSE Drive Capability
   */
-  HAL_PWR_EnableBkUpAccess();
-  __HAL_RCC_LSEDRIVE_CONFIG(RCC_LSEDRIVE_LOW);
+    HAL_PWR_EnableBkUpAccess();
+    __HAL_RCC_LSEDRIVE_CONFIG(RCC_LSEDRIVE_LOW);
 
-  /** Initializes the RCC Oscillators according to the specified parameters
+    /** Initializes the RCC Oscillators according to the specified parameters
   * in the RCC_OscInitTypeDef structure.
   */
-  RCC_OscInitStruct.OscillatorType = RCC_OSCILLATORTYPE_LSE|RCC_OSCILLATORTYPE_MSI;
-  RCC_OscInitStruct.LSEState = RCC_LSE_ON;
-  RCC_OscInitStruct.MSIState = RCC_MSI_ON;
-  RCC_OscInitStruct.MSICalibrationValue = 0;
-  RCC_OscInitStruct.MSIClockRange = RCC_MSIRANGE_6;
-  RCC_OscInitStruct.PLL.PLLState = RCC_PLL_NONE;
-  if (HAL_RCC_OscConfig(&RCC_OscInitStruct) != HAL_OK)
-  {
-    Error_Handler();
-  }
+    RCC_OscInitStruct.OscillatorType = RCC_OSCILLATORTYPE_LSE | RCC_OSCILLATORTYPE_MSI;
+    RCC_OscInitStruct.LSEState = RCC_LSE_ON;
+    RCC_OscInitStruct.MSIState = RCC_MSI_ON;
+    RCC_OscInitStruct.MSICalibrationValue = 0;
+    RCC_OscInitStruct.MSIClockRange = RCC_MSIRANGE_6;
+    RCC_OscInitStruct.PLL.PLLState = RCC_PLL_NONE;
+    if (HAL_RCC_OscConfig(&RCC_OscInitStruct) != HAL_OK)
+    {
+        Error_Handler();
+    }
 
-  /** Initializes the CPU, AHB and APB buses clocks
+    /** Initializes the CPU, AHB and APB buses clocks
   */
-  RCC_ClkInitStruct.ClockType = RCC_CLOCKTYPE_HCLK|RCC_CLOCKTYPE_SYSCLK
-                              |RCC_CLOCKTYPE_PCLK1|RCC_CLOCKTYPE_PCLK2;
-  RCC_ClkInitStruct.SYSCLKSource = RCC_SYSCLKSOURCE_MSI;
-  RCC_ClkInitStruct.AHBCLKDivider = RCC_SYSCLK_DIV1;
-  RCC_ClkInitStruct.APB1CLKDivider = RCC_HCLK_DIV1;
-  RCC_ClkInitStruct.APB2CLKDivider = RCC_HCLK_DIV1;
+    RCC_ClkInitStruct.ClockType =
+        RCC_CLOCKTYPE_HCLK | RCC_CLOCKTYPE_SYSCLK | RCC_CLOCKTYPE_PCLK1 | RCC_CLOCKTYPE_PCLK2;
+    RCC_ClkInitStruct.SYSCLKSource = RCC_SYSCLKSOURCE_MSI;
+    RCC_ClkInitStruct.AHBCLKDivider = RCC_SYSCLK_DIV1;
+    RCC_ClkInitStruct.APB1CLKDivider = RCC_HCLK_DIV1;
+    RCC_ClkInitStruct.APB2CLKDivider = RCC_HCLK_DIV1;
 
-  if (HAL_RCC_ClockConfig(&RCC_ClkInitStruct, FLASH_LATENCY_0) != HAL_OK)
-  {
-    Error_Handler();
-  }
+    if (HAL_RCC_ClockConfig(&RCC_ClkInitStruct, FLASH_LATENCY_0) != HAL_OK)
+    {
+        Error_Handler();
+    }
 
-  /** Enable MSI Auto calibration
+    /** Enable MSI Auto calibration
   */
-  HAL_RCCEx_EnableMSIPLLMode();
+    HAL_RCCEx_EnableMSIPLLMode();
 }
 
 /**
@@ -245,55 +256,53 @@ void SystemClock_Config(void)
   */
 static void MX_ADC1_Init(void)
 {
+    /* USER CODE BEGIN ADC1_Init 0 */
 
-  /* USER CODE BEGIN ADC1_Init 0 */
+    /* USER CODE END ADC1_Init 0 */
 
-  /* USER CODE END ADC1_Init 0 */
+    ADC_ChannelConfTypeDef sConfig = {0};
 
-  ADC_ChannelConfTypeDef sConfig = {0};
+    /* USER CODE BEGIN ADC1_Init 1 */
 
-  /* USER CODE BEGIN ADC1_Init 1 */
+    /* USER CODE END ADC1_Init 1 */
 
-  /* USER CODE END ADC1_Init 1 */
-
-  /** Common config
+    /** Common config
   */
-  hadc1.Instance = ADC1;
-  hadc1.Init.ClockPrescaler = ADC_CLOCK_ASYNC_DIV1;
-  hadc1.Init.Resolution = ADC_RESOLUTION_12B;
-  hadc1.Init.DataAlign = ADC_DATAALIGN_RIGHT;
-  hadc1.Init.ScanConvMode = ADC_SCAN_DISABLE;
-  hadc1.Init.EOCSelection = ADC_EOC_SINGLE_CONV;
-  hadc1.Init.LowPowerAutoWait = DISABLE;
-  hadc1.Init.ContinuousConvMode = DISABLE;
-  hadc1.Init.NbrOfConversion = 1;
-  hadc1.Init.DiscontinuousConvMode = DISABLE;
-  hadc1.Init.ExternalTrigConv = ADC_SOFTWARE_START;
-  hadc1.Init.ExternalTrigConvEdge = ADC_EXTERNALTRIGCONVEDGE_NONE;
-  hadc1.Init.DMAContinuousRequests = DISABLE;
-  hadc1.Init.Overrun = ADC_OVR_DATA_PRESERVED;
-  hadc1.Init.OversamplingMode = DISABLE;
-  if (HAL_ADC_Init(&hadc1) != HAL_OK)
-  {
-    Error_Handler();
-  }
+    hadc1.Instance = ADC1;
+    hadc1.Init.ClockPrescaler = ADC_CLOCK_ASYNC_DIV1;
+    hadc1.Init.Resolution = ADC_RESOLUTION_12B;
+    hadc1.Init.DataAlign = ADC_DATAALIGN_RIGHT;
+    hadc1.Init.ScanConvMode = ADC_SCAN_DISABLE;
+    hadc1.Init.EOCSelection = ADC_EOC_SINGLE_CONV;
+    hadc1.Init.LowPowerAutoWait = DISABLE;
+    hadc1.Init.ContinuousConvMode = DISABLE;
+    hadc1.Init.NbrOfConversion = 1;
+    hadc1.Init.DiscontinuousConvMode = DISABLE;
+    hadc1.Init.ExternalTrigConv = ADC_SOFTWARE_START;
+    hadc1.Init.ExternalTrigConvEdge = ADC_EXTERNALTRIGCONVEDGE_NONE;
+    hadc1.Init.DMAContinuousRequests = DISABLE;
+    hadc1.Init.Overrun = ADC_OVR_DATA_PRESERVED;
+    hadc1.Init.OversamplingMode = DISABLE;
+    if (HAL_ADC_Init(&hadc1) != HAL_OK)
+    {
+        Error_Handler();
+    }
 
-  /** Configure Regular Channel
+    /** Configure Regular Channel
   */
-  sConfig.Channel = ADC_CHANNEL_9;
-  sConfig.Rank = ADC_REGULAR_RANK_1;
-  sConfig.SamplingTime = ADC_SAMPLETIME_2CYCLES_5;
-  sConfig.SingleDiff = ADC_SINGLE_ENDED;
-  sConfig.OffsetNumber = ADC_OFFSET_NONE;
-  sConfig.Offset = 0;
-  if (HAL_ADC_ConfigChannel(&hadc1, &sConfig) != HAL_OK)
-  {
-    Error_Handler();
-  }
-  /* USER CODE BEGIN ADC1_Init 2 */
+    sConfig.Channel = ADC_CHANNEL_9;
+    sConfig.Rank = ADC_REGULAR_RANK_1;
+    sConfig.SamplingTime = ADC_SAMPLETIME_2CYCLES_5;
+    sConfig.SingleDiff = ADC_SINGLE_ENDED;
+    sConfig.OffsetNumber = ADC_OFFSET_NONE;
+    sConfig.Offset = 0;
+    if (HAL_ADC_ConfigChannel(&hadc1, &sConfig) != HAL_OK)
+    {
+        Error_Handler();
+    }
+    /* USER CODE BEGIN ADC1_Init 2 */
 
-  /* USER CODE END ADC1_Init 2 */
-
+    /* USER CODE END ADC1_Init 2 */
 }
 
 /**
@@ -303,34 +312,32 @@ static void MX_ADC1_Init(void)
   */
 static void MX_CAN1_Init(void)
 {
+    /* USER CODE BEGIN CAN1_Init 0 */
 
-  /* USER CODE BEGIN CAN1_Init 0 */
+    /* USER CODE END CAN1_Init 0 */
 
-  /* USER CODE END CAN1_Init 0 */
+    /* USER CODE BEGIN CAN1_Init 1 */
 
-  /* USER CODE BEGIN CAN1_Init 1 */
+    /* USER CODE END CAN1_Init 1 */
+    hcan1.Instance = CAN1;
+    hcan1.Init.Prescaler = 16;
+    hcan1.Init.Mode = CAN_MODE_NORMAL;
+    hcan1.Init.SyncJumpWidth = CAN_SJW_1TQ;
+    hcan1.Init.TimeSeg1 = CAN_BS1_1TQ;
+    hcan1.Init.TimeSeg2 = CAN_BS2_1TQ;
+    hcan1.Init.TimeTriggeredMode = DISABLE;
+    hcan1.Init.AutoBusOff = DISABLE;
+    hcan1.Init.AutoWakeUp = DISABLE;
+    hcan1.Init.AutoRetransmission = DISABLE;
+    hcan1.Init.ReceiveFifoLocked = DISABLE;
+    hcan1.Init.TransmitFifoPriority = DISABLE;
+    if (HAL_CAN_Init(&hcan1) != HAL_OK)
+    {
+        Error_Handler();
+    }
+    /* USER CODE BEGIN CAN1_Init 2 */
 
-  /* USER CODE END CAN1_Init 1 */
-  hcan1.Instance = CAN1;
-  hcan1.Init.Prescaler = 16;
-  hcan1.Init.Mode = CAN_MODE_NORMAL;
-  hcan1.Init.SyncJumpWidth = CAN_SJW_1TQ;
-  hcan1.Init.TimeSeg1 = CAN_BS1_1TQ;
-  hcan1.Init.TimeSeg2 = CAN_BS2_1TQ;
-  hcan1.Init.TimeTriggeredMode = DISABLE;
-  hcan1.Init.AutoBusOff = DISABLE;
-  hcan1.Init.AutoWakeUp = DISABLE;
-  hcan1.Init.AutoRetransmission = DISABLE;
-  hcan1.Init.ReceiveFifoLocked = DISABLE;
-  hcan1.Init.TransmitFifoPriority = DISABLE;
-  if (HAL_CAN_Init(&hcan1) != HAL_OK)
-  {
-    Error_Handler();
-  }
-  /* USER CODE BEGIN CAN1_Init 2 */
-
-  /* USER CODE END CAN1_Init 2 */
-
+    /* USER CODE END CAN1_Init 2 */
 }
 
 /**
@@ -340,45 +347,43 @@ static void MX_CAN1_Init(void)
   */
 static void MX_I2C2_Init(void)
 {
+    /* USER CODE BEGIN I2C2_Init 0 */
 
-  /* USER CODE BEGIN I2C2_Init 0 */
+    /* USER CODE END I2C2_Init 0 */
 
-  /* USER CODE END I2C2_Init 0 */
+    /* USER CODE BEGIN I2C2_Init 1 */
 
-  /* USER CODE BEGIN I2C2_Init 1 */
+    /* USER CODE END I2C2_Init 1 */
+    hi2c2.Instance = I2C2;
+    hi2c2.Init.Timing = 0x00100D14;
+    hi2c2.Init.OwnAddress1 = 0;
+    hi2c2.Init.AddressingMode = I2C_ADDRESSINGMODE_7BIT;
+    hi2c2.Init.DualAddressMode = I2C_DUALADDRESS_DISABLE;
+    hi2c2.Init.OwnAddress2 = 0;
+    hi2c2.Init.OwnAddress2Masks = I2C_OA2_NOMASK;
+    hi2c2.Init.GeneralCallMode = I2C_GENERALCALL_DISABLE;
+    hi2c2.Init.NoStretchMode = I2C_NOSTRETCH_DISABLE;
+    if (HAL_I2C_Init(&hi2c2) != HAL_OK)
+    {
+        Error_Handler();
+    }
 
-  /* USER CODE END I2C2_Init 1 */
-  hi2c2.Instance = I2C2;
-  hi2c2.Init.Timing = 0x00100D14;
-  hi2c2.Init.OwnAddress1 = 0;
-  hi2c2.Init.AddressingMode = I2C_ADDRESSINGMODE_7BIT;
-  hi2c2.Init.DualAddressMode = I2C_DUALADDRESS_DISABLE;
-  hi2c2.Init.OwnAddress2 = 0;
-  hi2c2.Init.OwnAddress2Masks = I2C_OA2_NOMASK;
-  hi2c2.Init.GeneralCallMode = I2C_GENERALCALL_DISABLE;
-  hi2c2.Init.NoStretchMode = I2C_NOSTRETCH_DISABLE;
-  if (HAL_I2C_Init(&hi2c2) != HAL_OK)
-  {
-    Error_Handler();
-  }
-
-  /** Configure Analogue filter
+    /** Configure Analogue filter
   */
-  if (HAL_I2CEx_ConfigAnalogFilter(&hi2c2, I2C_ANALOGFILTER_ENABLE) != HAL_OK)
-  {
-    Error_Handler();
-  }
+    if (HAL_I2CEx_ConfigAnalogFilter(&hi2c2, I2C_ANALOGFILTER_ENABLE) != HAL_OK)
+    {
+        Error_Handler();
+    }
 
-  /** Configure Digital filter
+    /** Configure Digital filter
   */
-  if (HAL_I2CEx_ConfigDigitalFilter(&hi2c2, 0) != HAL_OK)
-  {
-    Error_Handler();
-  }
-  /* USER CODE BEGIN I2C2_Init 2 */
+    if (HAL_I2CEx_ConfigDigitalFilter(&hi2c2, 0) != HAL_OK)
+    {
+        Error_Handler();
+    }
+    /* USER CODE BEGIN I2C2_Init 2 */
 
-  /* USER CODE END I2C2_Init 2 */
-
+    /* USER CODE END I2C2_Init 2 */
 }
 
 /**
@@ -388,37 +393,35 @@ static void MX_I2C2_Init(void)
   */
 static void MX_SPI3_Init(void)
 {
+    /* USER CODE BEGIN SPI3_Init 0 */
 
-  /* USER CODE BEGIN SPI3_Init 0 */
+    /* USER CODE END SPI3_Init 0 */
 
-  /* USER CODE END SPI3_Init 0 */
+    /* USER CODE BEGIN SPI3_Init 1 */
 
-  /* USER CODE BEGIN SPI3_Init 1 */
+    /* USER CODE END SPI3_Init 1 */
+    /* SPI3 parameter configuration*/
+    hspi3.Instance = SPI3;
+    hspi3.Init.Mode = SPI_MODE_MASTER;
+    hspi3.Init.Direction = SPI_DIRECTION_2LINES;
+    hspi3.Init.DataSize = SPI_DATASIZE_4BIT;
+    hspi3.Init.CLKPolarity = SPI_POLARITY_LOW;
+    hspi3.Init.CLKPhase = SPI_PHASE_1EDGE;
+    hspi3.Init.NSS = SPI_NSS_SOFT;
+    hspi3.Init.BaudRatePrescaler = SPI_BAUDRATEPRESCALER_2;
+    hspi3.Init.FirstBit = SPI_FIRSTBIT_MSB;
+    hspi3.Init.TIMode = SPI_TIMODE_DISABLE;
+    hspi3.Init.CRCCalculation = SPI_CRCCALCULATION_DISABLE;
+    hspi3.Init.CRCPolynomial = 7;
+    hspi3.Init.CRCLength = SPI_CRC_LENGTH_DATASIZE;
+    hspi3.Init.NSSPMode = SPI_NSS_PULSE_ENABLE;
+    if (HAL_SPI_Init(&hspi3) != HAL_OK)
+    {
+        Error_Handler();
+    }
+    /* USER CODE BEGIN SPI3_Init 2 */
 
-  /* USER CODE END SPI3_Init 1 */
-  /* SPI3 parameter configuration*/
-  hspi3.Instance = SPI3;
-  hspi3.Init.Mode = SPI_MODE_MASTER;
-  hspi3.Init.Direction = SPI_DIRECTION_2LINES;
-  hspi3.Init.DataSize = SPI_DATASIZE_4BIT;
-  hspi3.Init.CLKPolarity = SPI_POLARITY_LOW;
-  hspi3.Init.CLKPhase = SPI_PHASE_1EDGE;
-  hspi3.Init.NSS = SPI_NSS_SOFT;
-  hspi3.Init.BaudRatePrescaler = SPI_BAUDRATEPRESCALER_2;
-  hspi3.Init.FirstBit = SPI_FIRSTBIT_MSB;
-  hspi3.Init.TIMode = SPI_TIMODE_DISABLE;
-  hspi3.Init.CRCCalculation = SPI_CRCCALCULATION_DISABLE;
-  hspi3.Init.CRCPolynomial = 7;
-  hspi3.Init.CRCLength = SPI_CRC_LENGTH_DATASIZE;
-  hspi3.Init.NSSPMode = SPI_NSS_PULSE_ENABLE;
-  if (HAL_SPI_Init(&hspi3) != HAL_OK)
-  {
-    Error_Handler();
-  }
-  /* USER CODE BEGIN SPI3_Init 2 */
-
-  /* USER CODE END SPI3_Init 2 */
-
+    /* USER CODE END SPI3_Init 2 */
 }
 
 /**
@@ -428,43 +431,43 @@ static void MX_SPI3_Init(void)
   */
 static void MX_GPIO_Init(void)
 {
-  GPIO_InitTypeDef GPIO_InitStruct = {0};
-/* USER CODE BEGIN MX_GPIO_Init_1 */
-/* USER CODE END MX_GPIO_Init_1 */
+    GPIO_InitTypeDef GPIO_InitStruct = {0};
+    /* USER CODE BEGIN MX_GPIO_Init_1 */
+    /* USER CODE END MX_GPIO_Init_1 */
 
-  /* GPIO Ports Clock Enable */
-  __HAL_RCC_GPIOC_CLK_ENABLE();
-  __HAL_RCC_GPIOA_CLK_ENABLE();
-  __HAL_RCC_GPIOB_CLK_ENABLE();
+    /* GPIO Ports Clock Enable */
+    __HAL_RCC_GPIOC_CLK_ENABLE();
+    __HAL_RCC_GPIOA_CLK_ENABLE();
+    __HAL_RCC_GPIOB_CLK_ENABLE();
 
-  /*Configure GPIO pin Output Level */
-  HAL_GPIO_WritePin(GPIOB, FAULT_Pin|ERROR_Pin|OK_Pin|CS1_Pin, GPIO_PIN_RESET);
+    /*Configure GPIO pin Output Level */
+    HAL_GPIO_WritePin(GPIOB, FAULT_Pin | ERROR_Pin | OK_Pin | CS1_Pin, GPIO_PIN_RESET);
 
-  /*Configure GPIO pin Output Level */
-  HAL_GPIO_WritePin(CS2_GPIO_Port, CS2_Pin, GPIO_PIN_RESET);
+    /*Configure GPIO pin Output Level */
+    HAL_GPIO_WritePin(CS2_GPIO_Port, CS2_Pin, GPIO_PIN_RESET);
 
-  /*Configure GPIO pins : ALERT_Pin ADDR0_Pin ADDR1_Pin */
-  GPIO_InitStruct.Pin = ALERT_Pin|ADDR0_Pin|ADDR1_Pin;
-  GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
-  GPIO_InitStruct.Pull = GPIO_NOPULL;
-  HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
+    /*Configure GPIO pins : ALERT_Pin ADDR0_Pin ADDR1_Pin */
+    GPIO_InitStruct.Pin = ALERT_Pin | ADDR0_Pin | ADDR1_Pin;
+    GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
+    GPIO_InitStruct.Pull = GPIO_NOPULL;
+    HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
 
-  /*Configure GPIO pins : FAULT_Pin ERROR_Pin OK_Pin CS1_Pin */
-  GPIO_InitStruct.Pin = FAULT_Pin|ERROR_Pin|OK_Pin|CS1_Pin;
-  GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
-  GPIO_InitStruct.Pull = GPIO_NOPULL;
-  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
-  HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
+    /*Configure GPIO pins : FAULT_Pin ERROR_Pin OK_Pin CS1_Pin */
+    GPIO_InitStruct.Pin = FAULT_Pin | ERROR_Pin | OK_Pin | CS1_Pin;
+    GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
+    GPIO_InitStruct.Pull = GPIO_NOPULL;
+    GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
+    HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
 
-  /*Configure GPIO pin : CS2_Pin */
-  GPIO_InitStruct.Pin = CS2_Pin;
-  GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
-  GPIO_InitStruct.Pull = GPIO_NOPULL;
-  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
-  HAL_GPIO_Init(CS2_GPIO_Port, &GPIO_InitStruct);
+    /*Configure GPIO pin : CS2_Pin */
+    GPIO_InitStruct.Pin = CS2_Pin;
+    GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
+    GPIO_InitStruct.Pull = GPIO_NOPULL;
+    GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
+    HAL_GPIO_Init(CS2_GPIO_Port, &GPIO_InitStruct);
 
-/* USER CODE BEGIN MX_GPIO_Init_2 */
-/* USER CODE END MX_GPIO_Init_2 */
+    /* USER CODE BEGIN MX_GPIO_Init_2 */
+    /* USER CODE END MX_GPIO_Init_2 */
 }
 
 /* USER CODE BEGIN 4 */
@@ -480,31 +483,51 @@ static void MX_GPIO_Init(void)
 /* USER CODE END Header_StartDefaultTask */
 void StartDefaultTask(void *argument)
 {
-  /* USER CODE BEGIN 5 */
-  /* Infinite loop */
-  for(;;)
-  {
-    osDelay(1);
-  }
-  /* USER CODE END 5 */
+    /* USER CODE BEGIN 5 */
+    userStartDefaultTask(argument);  // never returns
+                                     /* USER CODE END 5 */
 }
 
-/* USER CODE BEGIN Header_StartCellCheck */
+/* USER CODE BEGIN Header_CheckVoltagesCheck */
 /**
-* @brief Function implementing the CellCheck thread.
+* @brief Function implementing the CheckVoltages thread.
 * @param argument: Not used
 * @retval None
 */
-/* USER CODE END Header_StartCellCheck */
-void StartCellCheck(void *argument)
+/* USER CODE END Header_CheckVoltagesCheck */
+void CheckVoltagesCheck(void *argument)
 {
-  /* USER CODE BEGIN StartCellCheck */
-  /* Infinite loop */
-  for(;;)
-  {
-    userStartCellCheck(argument);
-  }
-  /* USER CODE END StartCellCheck */
+    /* USER CODE BEGIN CheckVoltagesCheck */
+    userStartVoltagesCheck(argument);  // never returns
+                                       /* USER CODE END CheckVoltagesCheck */
+}
+
+/* USER CODE BEGIN Header_CheckTemp */
+/**
+* @brief Function implementing the CheckTemps thread.
+* @param argument: Not used
+* @retval None
+*/
+/* USER CODE END Header_CheckTemp */
+void CheckTemp(void *argument)
+{
+    /* USER CODE BEGIN CheckTemp */
+    userStartTempsCheck(argument);  // never returns
+                                    /* USER CODE END CheckTemp */
+}
+
+/* USER CODE BEGIN Header_CANMessage */
+/**
+* @brief Function implementing the CANMessages thread.
+* @param argument: Not used
+* @retval None
+*/
+/* USER CODE END Header_CANMessage */
+void CANMessage(void *argument)
+{
+    /* USER CODE BEGIN CANMessage */
+    userStartCANMessages(argument);  // never returns
+                                     /* USER CODE END CANMessage */
 }
 
 /**
@@ -513,16 +536,16 @@ void StartCellCheck(void *argument)
   */
 void Error_Handler(void)
 {
-  /* USER CODE BEGIN Error_Handler_Debug */
-  /* User can add his own implementation to report the HAL error return state */
-  __disable_irq();
-  while (1)
-  {
-  }
-  /* USER CODE END Error_Handler_Debug */
+    /* USER CODE BEGIN Error_Handler_Debug */
+    /* User can add his own implementation to report the HAL error return state */
+    __disable_irq();
+    while (1)
+    {
+    }
+    /* USER CODE END Error_Handler_Debug */
 }
 
-#ifdef  USE_FULL_ASSERT
+#ifdef USE_FULL_ASSERT
 /**
   * @brief  Reports the name of the source file and the source line number
   *         where the assert_param error has occurred.
@@ -532,9 +555,9 @@ void Error_Handler(void)
   */
 void assert_failed(uint8_t *file, uint32_t line)
 {
-  /* USER CODE BEGIN 6 */
-  /* User can add his own implementation to report the file name and line number,
+    /* USER CODE BEGIN 6 */
+    /* User can add his own implementation to report the file name and line number,
      ex: printf("Wrong parameters value: file %s on line %d\r\n", file, line) */
-  /* USER CODE END 6 */
+    /* USER CODE END 6 */
 }
 #endif /* USE_FULL_ASSERT */

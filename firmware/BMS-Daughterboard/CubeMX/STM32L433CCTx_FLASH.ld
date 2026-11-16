@@ -7,7 +7,7 @@
 **  Author		: STM32CubeMX
 **
 **  Abstract    : Linker script for STM32L433CCTx series
-**                256Kbytes FLASH and 64Kbytes RAM
+**                256Kbytes FLASH and 80Kbytes RAM
 **
 **                Set heap size, stack size and stack location according
 **                to application requirements.
@@ -15,13 +15,14 @@
 **                Set memory bank area and size if external memory is used.
 **
 **  Target      : STMicroelectronics STM32
+**
 **  Distribution: The file is distributed “as is,” without any warranty
 **                of any kind.
 **
 *****************************************************************************
 ** @attention
 **
-** <h2><center>&copy; COPYRIGHT(c) 2025 STMicroelectronics</center></h2>
+** <h2><center>&copy; COPYRIGHT(c) 2019 STMicroelectronics</center></h2>
 **
 ** Redistribution and use in source and binary forms, with or without modification,
 ** are permitted provided that the following conditions are met:
@@ -60,7 +61,7 @@ _Min_Stack_Size = 0x400; /* required amount of stack */
 /* Specify the memory areas */
 MEMORY
 {
-RAM (xrw)      : ORIGIN = 0x20000000, LENGTH = 48K
+RAM (xrw)      : ORIGIN = 0x20000000, LENGTH = 64K
 RAM2 (xrw)      : ORIGIN = 0x10000000, LENGTH = 16K
 FLASH (rx)      : ORIGIN = 0x8000000, LENGTH = 256K
 }
@@ -102,15 +103,13 @@ SECTIONS
     . = ALIGN(8);
   } >FLASH
 
-  .ARM.extab (READONLY) : /* The "READONLY" keyword is only supported in GCC11 and later, remove it if using GCC10 or earlier. */
+  .ARM.extab   : 
   { 
   . = ALIGN(8);
   *(.ARM.extab* .gnu.linkonce.armextab.*)
   . = ALIGN(8);
   } >FLASH
-
-  .ARM (READONLY) : /* The "READONLY" keyword is only supported in GCC11 and later, remove it if using GCC10 or earlier. */
-  {
+  .ARM : {
 	. = ALIGN(8);
     __exidx_start = .;
     *(.ARM.exidx*)
@@ -118,7 +117,7 @@ SECTIONS
 	. = ALIGN(8);
   } >FLASH
 
-  .preinit_array (READONLY) : /* The "READONLY" keyword is only supported in GCC11 and later, remove it if using GCC10 or earlier. */
+  .preinit_array     :
   {
 	. = ALIGN(8);
     PROVIDE_HIDDEN (__preinit_array_start = .);
@@ -127,7 +126,7 @@ SECTIONS
 	. = ALIGN(8);
   } >FLASH
   
-  .init_array (READONLY) : /* The "READONLY" keyword is only supported in GCC11 and later, remove it if using GCC10 or earlier. */
+  .init_array :
   {
 	. = ALIGN(8);
     PROVIDE_HIDDEN (__init_array_start = .);
@@ -136,9 +135,7 @@ SECTIONS
     PROVIDE_HIDDEN (__init_array_end = .);
 	. = ALIGN(8);
   } >FLASH
-
-  .fini_array (READONLY) : /* The "READONLY" keyword is only supported in GCC11 and later, remove it if using GCC10 or earlier. */
-
+  .fini_array :
   {
 	. = ALIGN(8);
     PROVIDE_HIDDEN (__fini_array_start = .);
@@ -158,8 +155,6 @@ SECTIONS
     _sdata = .;        /* create a global symbol at data start */
     *(.data)           /* .data sections */
     *(.data*)          /* .data* sections */
-    *(.RamFunc)        /* .RamFunc sections */
-    *(.RamFunc*)       /* .RamFunc* sections */
 
     . = ALIGN(8);
     _edata = .;        /* define a global symbol at data end */
@@ -203,6 +198,7 @@ SECTIONS
     libgcc.a ( * )
   }
 
+  .ARM.attributes 0 : { *(.ARM.attributes) }
 }
 
 
