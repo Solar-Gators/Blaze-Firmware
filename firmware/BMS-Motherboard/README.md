@@ -2,104 +2,75 @@
 
 Firmware project for Blaze's BMS motherboard.
 
-[Back to the repository overview](../../README.md)
+[Repository overview](../../README.md)
 
-## Current Status
-
-The project contains STM32CubeMX-generated peripheral initialization, bundled
-STM32 drivers, an IAR project, and a CMake target definition.
-
-After initialization, `main()` enters an empty loop. Application-level BMS
-behavior is not implemented in the checked-in application code.
-
-## Hardware and Software Configuration
-
-These values describe the checked-in project configuration.
+## Configuration
 
 | Item | Configuration |
 |---|---|
 | MCU | STM32G483RET3 |
-| Package | LQFP64 |
-| STM32 firmware package | STM32Cube FW_G4 V1.6.3 |
 | CubeMX project | `Motherboard.ioc` |
-| CubeMX output toolchain | EWARM V8.50 |
+| STM32 firmware package | STM32Cube FW_G4 V1.6.3 |
+| CubeMX output toolchain | Makefile |
+| Repository build | CMake and Arm GCC |
+| RTOS interface | CMSIS-RTOS2 over FreeRTOS |
 | CMake target | `BMS-Motherboard.elf` |
-| Application execution | Bare-metal main loop; no RTOS startup in `main()` |
 
-Board revision and schematics are not documented.
+Board revision and schematics are not documented here.
 
-## Implemented Initialization
+## Current Implementation
 
-`Core/Src/main.c` initializes:
+The project contains generated peripheral initialization, GCC startup and
+linker files, and FreeRTOS support.
 
-- GPIO
-- FDCAN2 and FDCAN3
-- I2C3
-- SPI1 and SPI3
-- TIM8
-- USB peripheral controller
+The application creates `defaultTask`.
 
-The attached devices, communication protocols, and intended use of these
-peripherals are not established by the initialization code alone.
+`StartDefaultTask()` calls `userDefaultTask()`, which currently loops with
+`osDelay(1)`.
 
-## Functional Responsibilities
-
-Not yet documented.
-
-Battery configuration, measurement devices, protection thresholds, contactor
-control, and communication responsibilities must be confirmed before they are
-documented as supported features.
+The task does not currently implement battery monitoring, protection logic,
+contactor control, or communication behavior. Peripheral configuration alone
+does not establish these capabilities.
 
 ## Directory Layout
 
 ```text
 BMS-Motherboard/
 ├── Core/
+├── CubeMX/
+├── Drivers/
+├── Middlewares/
+├── user/
 │   ├── Inc/
 │   └── Src/
-├── Drivers/
-├── EWARM/
 ├── CMakeLists.txt
 └── Motherboard.ioc
 ```
 
 ## Building
 
-The project is enabled in the repository-level CMake configuration.
-
-GCC build integration is incomplete: startup assembly and linker configuration
-are supplied under `EWARM/`, while CMake searches the subsystem root and
-`CubeMX/` for startup assembly and GCC `.ld` linker scripts.
-
-The IAR files cannot be used as GCC equivalents without the appropriate
-toolchain integration.
-
-After the build configuration is completed, the intended command from the
-repository root is:
+From the repository root:
 
 ```sh
 cmake --preset debug
 cmake --build --preset debug --target BMS-Motherboard.elf
 ```
 
-A successful build has not been established by this documentation.
+For Release, replace `debug` with `release` in both commands.
 
-See the [environment setup guide](../../docs/guides/environment-setup.md).
+Outputs are generated under `build/<preset>/firmware/BMS-Motherboard/`.
 
-## STM32CubeMX Workflow
+## Development
 
-Open `Motherboard.ioc` to modify peripheral or pin configuration.
-
-Preserve custom edits in regenerated files inside their `USER CODE` sections.
-Review toolchain, startup, linker, and driver changes after regeneration.
-
-See the [CubeMX workflow guide](../../docs/guides/cubemx-workflow.md).
+- [CubeMX workflow](../../docs/guides/cubemx-workflow.md)
+- [Adding threads](../../docs/guides/adding-threads.md)
 
 ## Information Still Needed
 
 - Board revision and schematic reference
-- Connected devices and their interfaces
-- BMS responsibilities and operating states
-- CAN message definitions and bus configuration
-- Fault handling and recovery requirements
-- Validated build, programming, and bench-test procedure
+- Connected devices and interfaces
+- Battery configuration and measurement responsibilities
+- Protection thresholds and recovery requirements
+- Contactor-control responsibilities, if applicable
+- CAN messages and timeout behavior
+- Programming and bench-test procedure
