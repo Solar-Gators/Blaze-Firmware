@@ -9,7 +9,6 @@
 #include "FreeRTOSConfig.h"
 #include "main.h"
 #include "projdefs.h"
-#include "rfd900x.h"
 
 #include <algorithm>
 #include <array>
@@ -83,10 +82,7 @@ size_t cobsEncode(const uint8_t* input, size_t length, uint8_t* output)
     return write_index;
 }
 
-// Constructor wires the radio object to UART2 once for this task.
-sg::Rfd900 radio(&huart3);
-}  // namespace
-
+}
 void radioInit()
 {
     // radio.enterLocalATCommandMode(); // we probably don't wanna call this? we wanna be in data mode not command (at) mode
@@ -172,7 +168,7 @@ void radioSend(const RadioMessage& msg)
     size_t frame_len = cobsEncode(body.data(), body_len, frame.data());
     frame[frame_len++] = 0x00;  // frame delimiter
 
-    radio.sendData(frame.data(), frame_len);
+    HAL_UART_Transmit(&huart3, frame.data(), static_cast<uint16_t>(frame_len), 100);
     stat_sent.fetch_add(1, std::memory_order_relaxed);
 }
 
