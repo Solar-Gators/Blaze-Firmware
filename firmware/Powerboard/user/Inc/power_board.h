@@ -7,12 +7,17 @@
 extern "C" {
 #endif
 
-/* One pass of the fan-control loop: reads sensors, sets fan PWM, checks fan
- * current, then sleeps 100 ms with osDelay(). Call repeatedly from a task. */
+/* sensor_fault bits */
+#define FAULT_MC_TEMP   0x01U
+#define FAULT_BAT_TEMP  0x02U
+#define FAULT_INA226    0x04U
+#define FAULT_ADC_CAL   0x08U
+
+/* Published in place of a temperature/current that could not be read */
+#define VALUE_INVALID   (-999.0f)
+
 void fanControlStep(void);
 
-/* Fan controller status (defined in power_board.cpp).
- * Declared here so other files, such as a CAN task, can read them. */
 extern volatile float    mc_temp_C;
 extern volatile float    bat_temp_C;
 extern volatile uint8_t  fan_duty_pct;
