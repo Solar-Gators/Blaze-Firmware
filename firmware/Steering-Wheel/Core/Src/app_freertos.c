@@ -23,6 +23,7 @@
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
 #include "user_threads.h"
+#include "app_touchgfx.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -54,7 +55,7 @@ const osThreadAttr_t defaultTask_attributes = {
 
 /* Private function prototypes -----------------------------------------------*/
 /* USER CODE BEGIN FunctionPrototypes */
-
+void TouchGFX_Task(void *argument);
 /* USER CODE END FunctionPrototypes */
 
 /**
@@ -86,7 +87,12 @@ void MX_FREERTOS_Init(void) {
   defaultTaskHandle = osThreadNew(StartDefaultTask, NULL, &defaultTask_attributes);
 
   /* USER CODE BEGIN RTOS_THREADS */
-  /* add threads, ... */
+    const osThreadAttr_t touchgfx_attr = { // define tough gfx down here inside the initializer.
+        .name = "TouchGFXTask",
+        .stack_size = 4096 * 4,
+        .priority = (osPriority_t) osPriorityNormal,
+      };
+    osThreadNew(TouchGFX_Task, NULL, &touchgfx_attr);
   /* USER CODE END RTOS_THREADS */
 
   /* USER CODE BEGIN RTOS_EVENTS */
@@ -114,6 +120,10 @@ void StartDefaultTask(void *argument)
 
 /* Private application code --------------------------------------------------*/
 /* USER CODE BEGIN Application */
-
+void TouchGFX_Task(void *argument)
+{
+    MX_TouchGFX_Process();   // runs the TouchGFX main loop, never returns
+    for(;;) { osDelay(1); }  // safety net
+}
 /* USER CODE END Application */
 
