@@ -24,7 +24,7 @@ HAL_StatusTypeDef BQ76952::Init(I2C_HandleTypeDef *hi2c, const uint8_t i2cAddres
 
     // RESET reboots the device and clears all RAM config back to OTP defaults
     vcell_mode_ = 0xFFFF;
-    num_cells_ = kMaxCells;
+    num_cells_ = MaxCells;
     current_mode_ = BQ_MODE_NORMAL;
 
     HAL_Delay(100);
@@ -93,7 +93,7 @@ HAL_StatusTypeDef BQ76952::SetVcellMode(const uint16_t mask)
 
     vcell_mode_ = mask;
     num_cells_ = 0;
-    for (uint8_t i = 0; i < kMaxCells; i++)
+    for (uint8_t i = 0; i < MaxCells; i++)
     {
         if (mask & (1u << i))
             num_cells_++;
@@ -111,7 +111,7 @@ HAL_StatusTypeDef BQ76952::ReadVoltages()
     int16_t high = INT16_MIN;
     uint8_t n = 0;
 
-    for (uint8_t input = 1; input <= kMaxCells; input++)
+    for (uint8_t input = 1; input <= MaxCells; input++)
     {
         if (!(vcell_mode_ & (1u << (input - 1))))
             continue;  // unused input
@@ -266,22 +266,21 @@ HAL_StatusTypeDef BQ76952::WriteBytes(const uint8_t reg_addr,
     buf[0] = reg_addr;
     memcpy(buf + 1, data, num_bytes);
 
-    return HAL_I2C_Master_Transmit(hi2c_, i2cAddressWrite, buf, num_bytes + 1, kI2cTimeoutMs);
+    return HAL_I2C_Master_Transmit(hi2c_, i2cAddressWrite, buf, num_bytes + 1, I2cTimeoutMs);
 }
 
 HAL_StatusTypeDef BQ76952::ReadBytes(const uint8_t reg_addr,
                                      uint8_t *data,
                                      const size_t num_bytes) const
 {
-    // Register-address write + repeated-start read in one transaction;
-    // a failed address phase is now reported instead of ignored.
+    // writes the register address then reads with a repeated start
     return HAL_I2C_Mem_Read(hi2c_,
                             i2cAddressWrite,
                             reg_addr,
                             I2C_MEMADD_SIZE_8BIT,
                             data,
                             static_cast<uint16_t>(num_bytes),
-                            kI2cTimeoutMs);
+                            I2cTimeoutMs);
 }
 
 HAL_StatusTypeDef BQ76952::DirectReadU2(const uint8_t reg_addr, uint16_t *value) const
@@ -473,7 +472,7 @@ HAL_StatusTypeDef BQ76952::SubcmdReadF4(const uint16_t subcmd, float *value) con
     if (status != HAL_OK)
         return status;
 
-    memcpy(value, &raw, sizeof(float));  // well-defined type pun
+    memcpy(value, &raw, sizeof(float));
     return HAL_OK;
 }
 
@@ -555,7 +554,7 @@ HAL_StatusTypeDef BQ76952::SubcmdCmdWriteI4(const uint16_t subcmd, int32_t value
 HAL_StatusTypeDef BQ76952::SubcmdCmdWriteF4(const uint16_t subcmd, float value) const
 {
     uint32_t raw;
-    memcpy(&raw, &value, sizeof(float));  // well-defined type pun
+    memcpy(&raw, &value, sizeof(float));
     return SubcmdWrite(subcmd, raw, 4);
 }
 

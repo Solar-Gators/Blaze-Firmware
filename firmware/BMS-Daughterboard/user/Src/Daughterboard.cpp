@@ -4,7 +4,6 @@
 #include "Daughterboard.h"
 
 #include <cstdint>
-#include <cstring>
 
 #include "cmsis_os.h"
 
@@ -20,43 +19,42 @@ namespace bmsdaughter
 namespace
 {
 
-BQ76952 bq;  // static storage, not on the 512-byte task stack
+BQ76952 bq;
 
-VoltageSnapshot g_snapshot{};  // published copy, guarded by a critical section
-bool g_snapshot_valid = false;
+VoltageSnapshot snapshot{};
+bool snapshot_valid = false;
 
-bool g_afe_ready = false;
-uint8_t g_comm_fail_count = 0;
-uint8_t g_ov_count = 0;
-uint8_t g_uv_count = 0;
-uint8_t g_latched_faults = VF_NONE;  // debounced OV/UV state carried between cycles
+bool afe_ready = false;
+uint8_t comm_fail_count = 0;
+uint8_t ov_count = 0;
+uint8_t uv_count = 0;
+uint8_t latched_faults = VF_NONE;  // debounced OV/UV state
 
 void publish(const VoltageSnapshot &s)
 {
     taskENTER_CRITICAL();
-    g_snapshot = s;
-    g_snapshot_valid = true;
+    snapshot = s;
+    snapshot_valid = true;
     taskEXIT_CRITICAL();
 }
 
+// keeps the last readings but updates the fault bits
 void publishFaultsOnly(uint8_t faults)
 {
-    // Keep the last readings but mark them stale/faulted
     taskENTER_CRITICAL();
-    g_snapshot.faults = faults;
+    snapshot.faults = faults;
     taskEXIT_CRITICAL();
 }
 
-// Set/clear a latched fault bit only after kFaultDebounceSamples consecutive
-// samples disagree with its current state.
+// fault bit only flips after FaultDebounceSamples samples in a row disagree with it
 void debounce(bool condition, uint8_t &count, uint8_t bit)
 {
-    const bool latched = (g_latched_faults & bit) != 0;
+    const bool latched = (latched_faults & bit) != 0;
     if (condition != latched)
     {
         if (++count >= FaultDebounceSamples)
         {
-            g_latched_faults ^= bit;
+            latched_faults ^= bit;
             count = 0;
         }
     }
@@ -67,61 +65,57 @@ void debounce(bool condition, uint8_t &count, uint8_t bit)
 }
 
 }  // namespace
+
 bool initAfe()
 {
-    g_afe_ready = false;
+    afe_ready = false;
 
-    // Init() sends RESET, waits, then checks the device ACKs.
-    // RESET wipes RAM config, so SetVcellMode must be re-applied every init.
+    // reset wipes the BQ's RAM config so vcell mode has to be set every init
     if (bq.Init(&hi2c2) != HAL_OK)
         return false;
 
-    // Writes Vcell Mode, reads it back, and limits ReadVoltages() to those inputs
     if (bq.SetVcellMode(VcellMode) != HAL_OK)
         return false;
 
     if (bq.GetNumCells() != NumCells)
-        return false;  // kVcellMode doesn't have exactly kNumCells bits set
+        return false;
 
-    g_afe_ready = true;
-    g_comm_fail_count = 0;
+    afe_ready = true;
+    comm_fail_count = 0;
     return true;
 }
 
 void updateVoltages()
 {
-    if (!g_afe_ready)
+    if (!afe_ready)
     {
         publishFaultsOnly(VF_AFE_INIT | VF_COMM);
         return;
     }
 
-    // ---- Read (driver retries each register once) --------------------------
     if (bq.ReadVoltages() != HAL_OK)
     {
-        if (g_comm_fail_count < 255)
-            g_comm_fail_count++;
+        if (comm_fail_count < 255)
+            comm_fail_count++;
 
-        if (g_comm_fail_count >= CommReinitLimit)
+        if (comm_fail_count >= CommReinitLimit)
         {
-            initAfe();  // try to recover the AFE; sets g_afe_ready on success
-            g_comm_fail_count = CommFailLimit;  // stay faulted until a good read
+            initAfe();
+            comm_fail_count = CommFailLimit;  // stay faulted until a good read
         }
 
-        if (g_comm_fail_count >= CommFailLimit)
-            publishFaultsOnly(g_latched_faults | VF_COMM);
-        return;  // never publish a partial/failed read as good data
+        if (comm_fail_count >= CommFailLimit)
+            publishFaultsOnly(latched_faults | VF_COMM);
+        return;  // don't publish a failed read
     }
-    g_comm_fail_count = 0;
+    comm_fail_count = 0;
 
     VoltageSnapshot s{};
     for (uint8_t i = 0; i < NumCells; i++)
         s.cell_mv[i] = bq.GetCellVoltage(i);
     s.stack_mv = bq.GetStackVoltage();
 
-    // ---- Validate + stats ---------------------------------------------------
-    // No substitution: invalid cells keep their raw value, are flagged,
-    // and are excluded from min/max/avg.
+    // invalid cells keep their raw value, get flagged, and are left out of min/max/avg
     s.min_mv = INT16_MAX;
     s.max_mv = INT16_MIN;
     uint8_t n_valid = 0;
@@ -138,7 +132,7 @@ void updateVoltages()
         n_valid++;
         s.sum_mv += v;
 
-        if (v > s.max_mv)  // two independent ifs: a cell can be both min and max
+        if (v > s.max_mv)
         {
             s.max_mv = v;
             s.max_idx = i;
@@ -171,7 +165,7 @@ void updateVoltages()
         s.avg_mv = 0;
     }
 
-    // Stack cross-check only makes sense when every cell read is valid
+    // only compare stack vs cell sum when every cell is valid
     if (n_valid == NumCells)
     {
         int32_t diff = s.stack_mv - s.sum_mv;
@@ -181,11 +175,10 @@ void updateVoltages()
             faults |= VF_STACK_MISMATCH;
     }
 
-    // ---- Debounce OV/UV (set and clear both need N consecutive samples) -----
-    debounce(any_ov, g_ov_count, VF_CELL_OV);
-    debounce(any_uv, g_uv_count, VF_CELL_UV);
+    debounce(any_ov, ov_count, VF_CELL_OV);
+    debounce(any_uv, uv_count, VF_CELL_UV);
 
-    s.faults = faults | g_latched_faults;
+    s.faults = faults | latched_faults;
     s.timestamp_ms = osKernelGetTickCount() * 1000u / osKernelGetTickFreq();
 
     publish(s);
@@ -194,8 +187,8 @@ void updateVoltages()
 bool getVoltageSnapshot(VoltageSnapshot &out)
 {
     taskENTER_CRITICAL();
-    out = g_snapshot;
-    const bool valid = g_snapshot_valid;
+    out = snapshot;
+    const bool valid = snapshot_valid;
     taskEXIT_CRITICAL();
     return valid;
 }

@@ -8,11 +8,12 @@
 #include <cstddef>
 #include <cstdint>
 
-#if defined(STM32L433xx)
+// each board only has its own family's HAL on the include path, so use whichever one exists
+#if __has_include("stm32l4xx_hal.h")
 #include "stm32l4xx_hal.h"
-#elif defined(STM32G483xx) || defined(STM32G473xx)
+#elif __has_include("stm32g4xx_hal.h")
 #include "stm32g4xx_hal.h"
-#elif defined(STM32U5G9xx)
+#elif __has_include("stm32u5xx_hal.h")
 #include "stm32u5xx_hal.h"
 #endif
 
@@ -33,8 +34,8 @@
 class BQ76952
 {
    public:
-    static constexpr uint8_t kMaxCells = 16;
-    static constexpr uint32_t kI2cTimeoutMs = 10;
+    static constexpr uint8_t MaxCells = 16;
+    static constexpr uint32_t I2cTimeoutMs = 10;
 
     BQ76952();
     HAL_StatusTypeDef Init(I2C_HandleTypeDef *hi2c);
@@ -45,14 +46,11 @@ class BQ76952
     [[nodiscard]] HAL_StatusTypeDef Reset() const;
     HAL_StatusTypeDef ConfigUpdate(bool config_update);
 
-    // Writes Settings:Configuration:Vcell Mode (bit n = cell input n+1 populated),
-    // verifies it by reading it back, and makes ReadVoltages() read only those inputs.
-    // Must be re-applied after every Reset()/Init(), because RESET clears RAM config.
+    // sets which cell inputs are used (bit n = input n+1) and reads it back to check
+    // has to be redone after every Reset()/Init()
     HAL_StatusTypeDef SetVcellMode(uint16_t mask);
 
-    // Reads every populated cell input (per SetVcellMode) plus stack/pack.
-    // Raw readings only: no substitution, no plausibility filtering. That is
-    // the application's job.
+    // reads the used cell inputs plus stack/pack, raw values only (no filtering)
     HAL_StatusTypeDef ReadVoltages();
     HAL_StatusTypeDef ReadSafetyFaults();  // Safety STATUS A/B/C (tripped protections)
     HAL_StatusTypeDef ReadCurrent();  // CC2 current; only meaningful if a sense resistor is fitted
@@ -105,13 +103,13 @@ class BQ76952
     I2C_HandleTypeDef *hi2c_{};
 
     uint16_t vcell_mode_ = 0xFFFF;  // populated cell inputs; chip default = all 16
-    uint8_t num_cells_ = kMaxCells;
+    uint8_t num_cells_ = MaxCells;
 
-    int16_t cell_voltages_[kMaxCells] = {0};  // mV, logical order (bottom populated cell first)
-    int16_t avg_cell_voltage_ = 0;            // Average cell voltage in mV
-    int16_t high_cell_voltage_ = 0;           // Highest cell voltage in mV
-    int16_t low_cell_voltage_ = 0;            // Lowest cell voltage in mV
-    int16_t pack_current_ = 0;                // CC2 current in userA (default mA)
+    int16_t cell_voltages_[MaxCells] = {0};  // mV, logical order (bottom populated cell first)
+    int16_t avg_cell_voltage_ = 0;           // Average cell voltage in mV
+    int16_t high_cell_voltage_ = 0;          // Highest cell voltage in mV
+    int16_t low_cell_voltage_ = 0;           // Lowest cell voltage in mV
+    int16_t pack_current_ = 0;               // CC2 current in userA (default mA)
 
     int32_t pack_voltage_ = 0;   // Pack voltage in mV (int32: 12S+ exceeds int16 in mV)
     int32_t stack_voltage_ = 0;  // Stack voltage in mV
