@@ -6,18 +6,18 @@
 #define BLAZEFIRMWARE_TELEMETRY_H
 
 #include "main.h"
+
 #include <array>
-#include <cstddef>
-#include <cstdint>
 
 constexpr size_t max_radio_message_array_size = 21;
 // 21 because thats the max packet we can send
 // 8 (long) + 8 (lat) + 4 (speed) + 1 (satellites?)
+
 struct RadioMessage
 {
     uint32_t id{};   // id of the radio message
     uint8_t size{};  // how many bytes in this array are we actually using
-    std::array<uint8_t, max_radio_message_array_size> data{};
+    std::array<uint8_t, max_radio_message_array_size> data{};  // this is so fragile im kms
 };
 
 // Snapshot of radio-link health, used to build the diagnostics telemetry frame.
@@ -37,4 +37,4 @@ RadioMessage waitForRadioMessageData();
 void radioSend(const RadioMessage& msg);
 RadioStats radioGetStats();
 
-#endif  // BLAZEFIRMWARE_TELEMETRY_H
+#endif  //BLAZEFIRMWARE_TELEMETRY_H

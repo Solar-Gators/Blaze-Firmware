@@ -3,8 +3,13 @@
 //
 
 #include "telemetry.h"
+
 #include "cmsis_os2.h"
+
+#include "FreeRTOSConfig.h"
 #include "main.h"
+#include "projdefs.h"
+
 #include <algorithm>
 #include <array>
 #include <atomic>
@@ -13,8 +18,8 @@ extern UART_HandleTypeDef huart3;
 
 namespace
 {
-
 osMessageQueueId_t queue;
+
 constexpr uint32_t RADIO_QUEUE_DEPTH = 32;
 
 // Radio-link health counters (see radioGetStats). Relaxed atomics: producers run
@@ -31,6 +36,7 @@ constexpr size_t RADIO_LEN_SIZE = sizeof(uint16_t);
 constexpr size_t RADIO_CRC_SIZE = sizeof(uint16_t);
 constexpr size_t RADIO_BODY_MAX_SIZE =
     RADIO_ID_SIZE + RADIO_LEN_SIZE + max_radio_message_array_size + RADIO_CRC_SIZE;
+
 constexpr size_t COBS_FRAME_MAX_SIZE = RADIO_BODY_MAX_SIZE + (RADIO_BODY_MAX_SIZE / 254) + 2;
 
 uint16_t crc16Ccitt(const uint8_t* data, size_t length)
@@ -80,6 +86,7 @@ size_t cobsEncode(const uint8_t* input, size_t length, uint8_t* output)
 
 void radioInit()
 {
+    // radio.enterLocalATCommandMode(); // we probably don't wanna call this? we wanna be in data mode not command (at) mode
     queue = osMessageQueueNew(RADIO_QUEUE_DEPTH, sizeof(RadioMessage), nullptr);
     if (!queue)
     {
@@ -106,6 +113,7 @@ bool enqueueRadioMessage(uint32_t id, const uint8_t* data, uint8_t len)
         stat_dropped.fetch_add(1, std::memory_order_relaxed);
         return false;
     }
+
     stat_enqueued.fetch_add(1, std::memory_order_relaxed);
 
     // Track the peak queue occupancy so the diagnostics frame can report how close
@@ -116,6 +124,7 @@ bool enqueueRadioMessage(uint32_t id, const uint8_t* data, uint8_t len)
            !stat_queue_high_water.compare_exchange_weak(peak, used, std::memory_order_relaxed))
     {
     }
+
     return true;
 }
 
@@ -143,6 +152,7 @@ void radioSend(const RadioMessage& msg)
     body[body_len++] = static_cast<uint8_t>((msg.id >> 8) & 0xFF);
     body[body_len++] = static_cast<uint8_t>((msg.id >> 16) & 0xFF);
     body[body_len++] = static_cast<uint8_t>((msg.id >> 24) & 0xFF);
+
     body[body_len++] = static_cast<uint8_t>(msg.size & 0xFF);
     body[body_len++] = static_cast<uint8_t>((msg.size >> 8) & 0xFF);
 
