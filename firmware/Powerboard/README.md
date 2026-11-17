@@ -2,82 +2,102 @@
 
 Firmware project for Blaze's powerboard.
 
-[Repository overview](../../README.md)
+[Back to the repository overview](../../README.md)
 
-## Configuration
+## Current Status
+
+The project contains STM32CubeMX-generated peripheral initialization, bundled
+STM32 drivers, an IAR project, and a CMake target definition.
+
+After initialization, `main()` enters an empty loop. Power-control behavior
+is not implemented in the checked-in application code.
+
+## Hardware and Software Configuration
+
+These values describe the checked-in project configuration.
 
 | Item | Configuration |
 |---|---|
 | MCU | STM32L433CCT6 |
-| CubeMX project | `PowerBoard.ioc` |
+| Package | LQFP48 |
 | STM32 firmware package | STM32Cube FW_L4 V1.18.2 |
-| CubeMX output toolchain | Makefile |
-| Repository build | CMake and Arm GCC |
-| RTOS interface | CMSIS-RTOS2 over FreeRTOS |
+| CubeMX project | `PowerBoard.ioc` |
+| CubeMX output toolchain | EWARM V8.32 |
 | CMake target | `Powerboard.elf` |
+| Application execution | Bare-metal main loop; no RTOS startup in `main()` |
 
-Board revision and schematics are not documented here.
+Board revision and schematics are not documented.
 
-## Current Implementation
+## Implemented Initialization
 
-The project contains generated peripheral initialization, GCC startup and
-linker files, and FreeRTOS support.
+`Core/Src/main.c` initializes:
 
-The application creates:
+- GPIO
+- ADC1
+- CAN1
+- I2C2
+- TIM1 and TIM16
 
-| Task | Entry function | Current behavior |
-|---|---|---|
-| `defaultTask` | `StartDefaultTask()` | Calls `userDefaultTask()` |
-| `TempSensing` | `StartTempSensing()` | Loops with `osDelay(1)` |
+The loads, sensors, and external devices associated with these peripherals
+are not established by the initialization code alone.
 
-`userDefaultTask()` is implemented in `user/Src/user_threads.cpp` and
-currently loops with `osDelay(1)`.
+## Functional Responsibilities
 
-`TempSensing` does not currently perform temperature acquisition.
-Power sequencing, measurement conversion, and fault handling are not
-implemented by these placeholder tasks.
+Not yet documented.
+
+Controlled power rails, output channels, sequencing requirements, measurement
+scaling, and fault behavior are unknown.
 
 ## Directory Layout
 
 ```text
 Powerboard/
 ├── Core/
-├── CubeMX/
-├── Drivers/
-├── Middlewares/
-├── user/
 │   ├── Inc/
 │   └── Src/
+├── Drivers/
+├── EWARM/
 ├── CMakeLists.txt
 └── PowerBoard.ioc
 ```
 
 ## Building
 
-From the repository root:
+The project is enabled in the repository-level CMake configuration.
+
+GCC build integration is incomplete: startup assembly and linker configuration
+are supplied under `EWARM/`, while CMake searches the subsystem root and
+`CubeMX/` for startup assembly and GCC `.ld` linker scripts.
+
+After the build configuration is completed, the intended command from the
+repository root is:
 
 ```sh
 cmake --preset debug
 cmake --build --preset debug --target Powerboard.elf
 ```
 
-For Release, replace `debug` with `release` in both commands.
+Target and directory names are case-sensitive on some systems. Use
+`Powerboard.elf` exactly as shown.
 
-Outputs are generated under `build/<preset>/firmware/Powerboard/`.
+A successful build has not been established by this documentation.
 
-Use the target capitalization exactly as shown.
+See the [environment setup guide](../../docs/guides/environment-setup.md).
 
-## Development
+## STM32CubeMX Workflow
 
-- [CubeMX workflow](../../docs/guides/cubemx-workflow.md)
-- [Adding threads](../../docs/guides/adding-threads.md)
+Open `PowerBoard.ioc` to modify peripheral or pin configuration.
+
+Preserve custom edits in regenerated files inside their `USER CODE` sections.
+Review the generated files and corresponding CMake inputs after regeneration.
+
+See the [CubeMX workflow guide](../../docs/guides/cubemx-workflow.md).
 
 ## Information Still Needed
 
 - Board revision and schematic reference
 - Controlled rails and output assignments
-- Temperature and other measurement hardware
-- Conversion factors and units
+- Sensor interfaces and conversion factors
 - Startup and shutdown sequencing
-- CAN messages and fault behavior
-- Programming and bench-test procedure
+- CAN message definitions and bus configuration
+- Fault handling and validated bench-test procedure

@@ -1,93 +1,126 @@
 # Front Vehicle Control Unit
 
-Firmware project for Blaze's front VCU.
+Firmware project for Blaze's front vehicle control unit.
 
-[Repository overview](../../README.md)
+[Back to the repository overview](../../README.md)
 
-## Configuration
+## Current Status
 
-| Item | Configuration |
+The project currently provides generated STM32 peripheral initialization and a
+minimal FreeRTOS application.
+
+The following are intended responsibilities, not implemented features in the
+current application code:
+
+- Throttle
+- Brake light control
+- Front lighting, turn signal, and horn control
+- CAN message transmission and routing
+
+The checked-in configuration does not yet include the ADC and application I/O
+setup needed to support all of these functions.
+
+## Hardware and Software Configuration
+
+| Item | Checked-in configuration |
 |---|---|
-| MCU | STM32G483RET3 |
-| CubeMX project | `Front-VCU.ioc` |
+| MCU | STM32G483RET3, as selected in `Front-VCU.ioc` |
+| Package | LQFP64 |
+| CPU | Arm Cortex-M4 |
+| System clock | 170 MHz |
 | STM32 firmware package | STM32Cube FW_G4 V1.6.3 |
+| RTOS interface | FreeRTOS with CMSIS-RTOS2 |
 | CubeMX output toolchain | Makefile |
-| Repository build | CMake and Arm GCC |
-| RTOS interface | CMSIS-RTOS2 over FreeRTOS |
 | CMake target | `Front-VCU.elf` |
 
-Board revision, schematic reference, and final control responsibilities are
-not documented here.
+Board revision and schematic links are not documented in this directory.
 
-## Current Implementation
+## Implemented Initialization
 
-`Core/Src/main.c` initializes GPIO, FDCAN1, FDCAN2, FDCAN3, the independent
-watchdog, and the RTOS kernel.
+`Core/Src/main.c` initializes:
 
-The application creates `defaultTask`.
+- GPIO support
+- FDCAN1, FDCAN2, and FDCAN3
+- The independent watchdog
+- The CMSIS-RTOS2 kernel
+- Two application threads: `idleTask` and `defaultTask`
 
-`StartDefaultTask()` calls `userDefaultTask()`, declared in
-`user/Inc/user_threads.h` and implemented in `user/Src/user_threads.cpp`.
-The user function currently loops with `osDelay(1)`.
+`StartIdleTask()` currently loops with `osDelay(1)`.
 
-The current application does not create a separate application thread named
-`idleTask`. FreeRTOS manages its own kernel idle task.
+`StartDefaultTask()` calls `userDefaultTask()`, defined in
+`user/Src/user_threads.cpp`. That function currently loops with `osDelay(1)`.
+Its C-compatible declaration is in `user/Inc/user_threads.h`.
 
-Vehicle-control and CAN-processing behavior are not implemented by the
-placeholder user task.
+Neither task currently performs vehicle control or CAN processing.
 
-## Known Limitations
+The stack-overflow and allocation-failure hooks in `Core/Src/app_freertos.c`
+are placeholders. The application also does not currently refresh the
+initialized watchdog.
 
-- The independent watchdog is started but is not currently refreshed.
-  Normal execution can therefore end in a watchdog reset.
-- Stack-overflow and allocation-failure hooks are placeholders.
-- Peripheral initialization alone does not establish working CAN traffic.
-- `CubeMX/` contains two identical linker scripts whose filenames differ
-  only by case: `STM32G483XX_FLASH.ld` and `STM32G483xx_FLASH.ld`.
-  Keep one consistent filename when resolving this issue.
+Peripheral initialization alone does not establish working CAN communication,
+sensor acquisition, or control behavior.
 
 ## Directory Layout
 
 ```text
 Front-VCU/
 ├── Core/
-│   ├── Inc/
-│   └── Src/
+│   ├── Inc/                      # Application and HAL configuration headers
+│   └── Src/                      # Startup flow, peripheral setup, and RTOS hooks
 ├── CubeMX/
-├── Drivers/
-├── Middlewares/
+│   ├── Makefile
+│   ├── startup_stm32g483xx.s
+│   └── STM32G483XX_FLASH.ld
+├── Drivers/                      # STM32 HAL and CMSIS
+├── Middlewares/                  # FreeRTOS and its CMSIS-RTOS2 adapter
 ├── user/
-│   ├── Inc/
-│   └── Src/
+│   ├── Inc/                      # Application-owned headers
+│   └── Src/                      # Application-owned implementation and task logic
 ├── CMakeLists.txt
-└── Front-VCU.ioc
+├── Front-VCU.ioc
+└── README.md
 ```
 
 ## Building
 
-From the repository root:
+This target is part of the repository-level CMake project. Use the repository
+root rather than configuring this directory independently.
+
+See the root README for
+[tool requirements and build blockers](../../README.md#build-configuration).
+
+After those blockers are resolved, the intended debug build is:
 
 ```sh
 cmake --preset debug
 cmake --build --preset debug --target Front-VCU.elf
 ```
 
-For Release, replace `debug` with `release` in both commands.
+Selecting this target does not bypass configuration errors in other enabled
+subsystems.
 
-Outputs are generated under `build/<preset>/firmware/Front-VCU/`.
+## STM32CubeMX Workflow
 
-## Development
+1. Open `Front-VCU.ioc`.
+2. Update peripheral, clock, or pin configuration in CubeMX.
+3. Preserve the Makefile output configuration and `CubeMX/` toolchain location
+   unless intentionally updating the build integration.
+4. Regenerate the project.
+5. Review the generated diff and confirm that CMake still references the correct
+   startup assembly, linker script, sources, and headers.
 
-Use CubeMX for peripheral and RTOS configuration. Keep application logic in
-`user/` and custom generated-file edits inside `USER CODE` sections.
+Keep custom edits in regenerated `Core/` files inside the corresponding
+user-code sections:
 
-- [CubeMX workflow](../../docs/guides/cubemx-workflow.md)
-- [Adding threads](../../docs/guides/adding-threads.md)
+```c
+/* USER CODE BEGIN 0 */
 
-## Information Still Needed
+/* USER CODE END 0 */
+```
 
-- Board revision and schematic reference
-- CAN message definitions and bus timing
-- Control responsibilities and operating states
-- Watchdog health criteria and recovery behavior
-- Programming and bench-test procedure
+Keep substantial application logic in `user/Inc/` and `user/Src/`, with calls
+from the appropriate generated user-code sections.
+
+Treat files under `CubeMX/` as generated artifacts. Make configuration changes
+through CubeMX where possible, and document any necessary manual startup or
+linker changes so they can be preserved during regeneration.

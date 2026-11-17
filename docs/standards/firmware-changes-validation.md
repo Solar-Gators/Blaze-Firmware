@@ -1,106 +1,56 @@
-# Change Validation and Review (I wouldnt follow this just yet)
+# Change Validation and Review
 
-Use this guide to document what changed and what was verified.
+Status: proposed conventions for documenting and reviewing firmware changes.
 
-## Change Description
+## Minimum Change Description
 
 Describe:
 
-- Problem or requirement
-- Affected subsystem
-- Resulting behavior
+- The problem or requirement
+- The affected subsystem
+- The resulting behavior
 - Validation performed
-- Known limitations
+- Known limitations or untested behavior
 
 Keep the description proportional to the change.
 
 ## Build Validation
 
-For firmware or build changes, record:
+For executable-code or build-configuration changes, record:
 
 - Commit and local modifications
-- Target and preset
+- Target and build preset
 - Compiler and CMake versions
-- Build command
+- Exact build command
 - Result and relevant warnings
 
-Example:
+If existing repository issues prevent a build, name the blocker and state that
+the change remains unbuilt. Do not describe source inspection as a passing build.
 
-```sh
-cmake --preset debug
-cmake --build --preset debug --target Front-VCU.elf
-```
-
-Use Release validation when optimization may affect behavior.
-
-For shared build changes, build all targets:
-
-```sh
-cmake --preset debug
-cmake --build --preset debug --target all
-cmake --preset release
-cmake --build --preset release --target all
-```
-
-CI checks project-owned formatting and both complete builds. These checks
-do not replace functional or hardware tests.
-
-## Formatting Validation
-
-Use clang-format 17.
-
-For each changed project-owned file:
-
-```sh
-clang-format --style=file --dry-run --Werror path/to/file.cpp
-```
-
-Inspect the diff after applying formatting.
+For documentation-only changes, check paths, commands, links, and consistency
+with the source.
 
 ## Functional Validation
 
 Choose checks that exercise the changed behavior.
 
-Examples:
+Examples include:
 
-- Known inputs and expected conversion results
+- Known inputs and expected outputs for conversion or parsing logic
 - Boundary and invalid-input cases
-- CAN transmit and receive behavior
-- Task startup, timing, and blocking
+- CAN transmit/receive observations
+- Task startup and timing behavior
 - Fault detection and recovery
-- Reset and restart behavior
-- GUI updates and input handling
+- Persistence across reset, when relevant
 
-Use host-side tests for logic that does not require hardware.
-Use board tests for peripheral and electrical behavior.
+Use host-side tests for logic that does not require hardware. Use board tests
+for behavior that depends on peripherals or electrical interfaces.
 
-## New or Changed Threads
-
-Verify:
-
-- The generated thread exists and is created successfully.
-- Its entry function reaches the intended user implementation.
-- Its stack and priority are suitable for the work.
-- It blocks or delays appropriately.
-- Shared data access is synchronized.
-- Regeneration preserves the connection to user code.
-
-## TouchGFX Changes
-
-For GUI-only changes, test the relevant screens and interactions in the
-simulator when available.
-
-For target changes, also verify on hardware:
-
-- Rendering task startup
-- Display output
-- Memory configuration
-- Input handling
-- Data transfer between application tasks and the GUI
-
-Simulator success does not verify the MCU's display or touch integration.
+Passing a host test does not establish correct hardware behavior.
 
 ## Hardware Test Record
+
+Use this template when reporting a board test:
 
 | Field | Result |
 |---|---|
@@ -109,8 +59,7 @@ Simulator success does not verify the MCU's display or touch integration.
 | Board revision | |
 | Firmware commit | |
 | Local modifications | |
-| Compiler and preset | |
-| Probe and debug server | |
+| Compiler and build preset | |
 | Test equipment and connections | |
 | Procedure | |
 | Expected behavior | |
@@ -118,48 +67,45 @@ Simulator success does not verify the MCU's display or touch integration.
 | Evidence or log location | |
 | Remaining issues | |
 
-Write `Unknown` for unavailable information.
+If a value is unknown, write `Unknown`.
 
 ## Generated-Code Review
 
-Check changes to:
+For CubeMX or middleware changes, check:
 
 - MCU and pin configuration
-- Clocks and peripheral timing
-- Interrupt priorities
+- Clock sources and derived timing
+- Interrupt configuration
 - RTOS configuration
 - Compiler-specific middleware ports
 - Startup and linker files
-- Application-owned code preservation
-- Vendor files and middleware versions
+- Preservation of application-owned code
+- Unintended vendor-file changes
 
-Record intentional package migrations explicitly.
+Record firmware-package migrations separately from application changes.
 
 ## Communication Changes
 
-Document:
+When adding or changing a message, document:
 
 - Bus or interface
 - Identifier and frame format
-- Payload length and field layout
-- Byte order
-- Units and scaling
+- Payload length
+- Field positions and byte order
+- Units, scaling, and valid ranges
 - Transmission trigger or period
 - Timeout and invalid-data behavior
-- Compatibility with existing receivers
+- Compatibility with existing senders and receivers
 
-## Documentation-Only Changes
-
-Check paths, commands, links, and consistency with the source.
-
-Do not describe source inspection as a successful build or hardware test.
+Values remain unspecified until the protocol is defined.
 
 ## Review Checklist
 
-- [ ] The change addresses the stated requirement.
-- [ ] Application and generated changes are identifiable.
-- [ ] New source files enter the intended target.
+- [ ] The change addresses the stated problem.
+- [ ] Implementation and documentation agree.
+- [ ] Generated and application-owned changes are identifiable.
 - [ ] Relevant checks have recorded results.
-- [ ] Unperformed checks are listed.
-- [ ] Documentation matches the implementation.
-- [ ] No unrelated build outputs or local configuration were added.
+- [ ] Unperformed checks are explicitly listed.
+- [ ] No unrelated build products or local configuration were added.
+- [ ] New files are included in the intended build target.
+- [ ] Known failures are not presented as verified behavior.

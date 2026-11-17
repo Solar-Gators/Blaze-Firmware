@@ -1,78 +1,68 @@
 # Telemetry
 
-Firmware project for Blaze's telemetry subsystem.
+Project directory for Blaze's telemetry firmware.
 
-[Repository overview](../../README.md)
+[Back to the repository overview](../../README.md)
 
-## Configuration
+## Current Status
 
-| Item | Configuration |
+This directory currently contains only `CMakeLists.txt`.
+
+It does not contain application sources, a CubeMX project, startup assembly,
+or a linker script. The project is disabled in the top-level CMake configuration.
+
+## Hardware and Software Configuration
+
+| Item | Status |
 |---|---|
-| MCU | STM32G483RET3 |
-| CubeMX project | `Telemetry.ioc` |
-| STM32 firmware package | STM32Cube FW_G4 V1.6.3 |
-| CubeMX output toolchain | Makefile |
-| Repository build | CMake and Arm GCC |
-| RTOS interface | CMSIS-RTOS2 over FreeRTOS |
-| CMake target | `Telemetry.elf` |
+| MCU | Not confirmed |
+| Board revision | Not documented |
+| Schematics | Not documented |
+| Communication hardware | Not documented |
+| CubeMX project | Not present |
+| RTOS | Not confirmed |
+| Declared CMake target | `Telemetry.elf` |
 
-The configured MCU does not establish the final board revision or telemetry
-hardware selection.
+The CMake scaffold references STM32G4, `STM32G483xx`, and FreeRTOS paths.
+These references do not establish the final hardware or software selection.
 
-## Current Implementation
+## Functional Responsibilities
 
-The project contains generated initialization code, GCC startup and linker
-files, FreeRTOS support, and application-owned source directories.
+Not yet documented.
 
-The application creates `defaultTask`.
-
-`StartDefaultTask()` calls `userDefaultTask()`, which currently loops with
-`osDelay(1)`.
-
-Radio communication, logging, data transport, and destination-service behavior
-are not implemented in the placeholder user task.
+The repository does not establish the telemetry transport, radio or modem,
+data format, logging behavior, or destination service.
 
 ## Directory Layout
 
 ```text
 Telemetry/
-├── Core/
-├── CubeMX/
-├── Drivers/
-├── Middlewares/
-├── user/
-│   ├── Inc/
-│   └── Src/
-├── CMakeLists.txt
-└── Telemetry.ioc
+└── CMakeLists.txt
 ```
 
 ## Building
 
-The project is enabled in the top-level build.
+There is no complete firmware project to build.
 
-From the repository root:
+The target is not available through the current top-level configuration.
+Enabling its `add_subdirectory()` entry without adding the required sources
+and startup files will trigger the scaffold's missing-source error.
 
-```sh
-cmake --preset debug
-cmake --build --preset debug --target Telemetry.elf
-```
+Before enabling this project:
 
-For Release, replace `debug` with `release` in both commands.
+1. Confirm the MCU and communication hardware.
+2. Add the matching project configuration and application sources.
+3. Supply startup assembly and a linker script for the selected compiler.
+4. Update source paths, include paths, MCU definitions, and compiler options.
+5. Establish a successful build and document the result.
 
-Outputs are generated under `build/<preset>/firmware/Telemetry/`.
-
-## Development
-
-- [CubeMX workflow](../../docs/guides/cubemx-workflow.md)
-- [Adding threads](../../docs/guides/adding-threads.md)
+See the [environment setup guide](../../docs/guides/environment-setup.md).
 
 ## Information Still Needed
 
-- Board revision and schematic reference
-- Radio, modem, or other communication hardware
-- Data sources and message definitions
-- Transport and destination service
-- Update rates, buffering, and logging requirements
+- Hardware selection and schematic reference
+- Data sources and communication interfaces
+- Transport and message format
+- Update rates and buffering requirements
 - Connection-loss and recovery behavior
-- Programming and bench-test procedure
+- Build, programming, and test procedure

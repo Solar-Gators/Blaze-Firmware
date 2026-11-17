@@ -1,113 +1,93 @@
 # STM32CubeMX Workflow
 
-Use CubeMX to configure peripherals, clocks, pins, and RTOS objects.
+Use this workflow when changing peripheral configuration or regenerating code.
 
-The repository builds firmware with CMake and Arm GCC. The checked-in
-CubeMX projects select Makefile output.
+## Existing Projects
 
-## Projects
-
-Paths below are relative to `firmware/`.
-
-| Subsystem | CubeMX file | STM32 firmware package |
+| Subsystem | CubeMX file | Configured output toolchain |
 |---|---|---|
-| Front VCU | `Front-VCU/Front-VCU.ioc` | FW_G4 V1.6.3 |
-| Rear VCU | `Rear-VCU/Rear-VCU.ioc` | FW_G4 V1.6.3 |
-| Steering wheel | `Steering-Wheel/Steering-Wheel.ioc` | FW_U5 V1.9.0 |
-| Telemetry | `Telemetry/Telemetry.ioc` | FW_G4 V1.6.3 |
-| BMS motherboard | `BMS-Motherboard/Motherboard.ioc` | FW_G4 V1.6.3 |
-| BMS daughterboard | `BMS-Daughterboard/Daughterboard.ioc` | FW_L4 V1.18.2 |
-| Powerboard | `Powerboard/PowerBoard.ioc` | FW_L4 V1.18.2 |
+| Front-VCU | `firmware/Front-VCU/Front-VCU.ioc` | Makefile |
+| BMS-Motherboard | `firmware/BMS-Motherboard/Motherboard.ioc` | EWARM V8.50 |
+| BMS-Daughterboard | `firmware/BMS-Daughterboard/Daughterboard 2.ioc` | EWARM V8.32 |
+| Powerboard | `firmware/Powerboard/PowerBoard.ioc` | EWARM V8.32 |
+| Steering-Wheel | `firmware/Steering-Wheel/Steering-Wheel.ioc` | EWARM V9.20 |
 
-## Before Generating
+Rear-VCU and Telemetry do not currently contain `.ioc` files.
 
-1. Check `git status` and preserve existing work.
-2. Open the correct `.ioc`.
-3. Verify the MCU and firmware package.
-4. Check the output location and toolchain.
-5. Enable preservation of user code during regeneration.
-6. Review migration prompts before accepting upgrades.
+## Before Regenerating
 
-Do not change firmware packages or middleware versions incidentally while
-making an unrelated pin or task change.
+1. Check `git status` and preserve any existing work.
+2. Open the correct subsystem's `.ioc` file.
+3. Verify the MCU, firmware package, output toolchain, and output directory.
+4. Review any migration prompt before accepting it.
+5. Identify custom edits outside generated user-code sections.
+
+A firmware-package or CubeMX upgrade may change more than the peripheral
+configuration you intended to edit. Record intentional upgrades explicitly.
 
 ## Application Code Placement
 
-All subsystem projects have:
+For edits inside regenerated files, use the matching `USER CODE` sections.
 
-```text
-user/Inc/
-user/Src/
-```
+Front-VCU keeps application-owned code under `user/Inc/` and `user/Src/`.
+Its generated `StartDefaultTask()` calls `userDefaultTask()` through a
+C-compatible declaration in `user_threads.h`.
 
-Keep substantial application logic there.
+When adopting this pattern in another subsystem:
 
-Generated entry functions should call application-owned functions through
-headers such as `user_threads.h`.
+- Add the directories to that target's CMake include and source paths.
+- Keep generated entry points small.
+- Verify C/C++ linkage when generated C calls C++ functions.
 
-Custom edits in generated files must stay inside the corresponding
-`USER CODE BEGIN` and `USER CODE END` sections.
+Creating a `user/` directory alone does not add its files to the build.
 
-See [Adding application threads](adding-threads.md).
+## Regenerate and Review
 
-## Generate and Review
+After generation:
 
-After changing configuration:
+1. Review the `.ioc` diff.
+2. Review generated source and header changes.
+3. Verify that custom code survived.
+4. Check startup assembly and linker files. (probably dont have to do this)
+5. Check middleware paths and compiler-specific ports. (probably dont have to do this)
+6. Reload CMake and build the affected target when its integration is complete.
 
-1. Generate code.
-2. Review the `.ioc` diff.
-3. Review generated source and header changes.
-4. Confirm custom code survived.
-5. Check startup, linker, middleware-port, and include paths.
-6. Rerun CMake.
-7. Build the affected target.
-
-From the repository root:
+Useful checks from the repository root:
 
 ```sh
+git status --short
 git diff --stat
 git diff --check
-cmake --preset debug
-cmake --build --preset debug --target Front-VCU.elf
 ```
 
-Replace the target as appropriate.
+Inspect the full diff before committing.
 
-CubeMX generation does not automatically maintain every custom CMake input.
-Check CMake when generation adds files, moves files, or enables middleware.
+## Toolchain Compatibility
 
-## Startup and Linker Files
+IAR and GCC use different startup, linker, and middleware-port inputs.
 
-The CMake projects use GCC startup assembly and linker scripts under
-`CubeMX/`.
+Changing the CubeMX output toolchain requires corresponding build changes.
+Do not rename an IAR linker configuration to `.ld` or assume an IAR RTOS port
+can be compiled by GCC.
 
-Do not substitute IAR startup code or linker configuration files for GCC
-inputs.
+## Front-VCU Linker Filename
 
-Use exact, consistent filenames. Avoid files whose names differ only by case.
+The reviewed branch contains:
 
-Front-VCU currently has a case-only duplicate linker script. Resolve that
-duplicate together with its CMake reference.
+```text
+STM32G483XX_FLASH.ld
+STM32G483xx_FLASH.ld
+```
 
-## RTOS Configuration
+These names differ only by case. The CMake configuration selects the first.
 
-Review:
-
-- Task entry function and name
-- Priority
-- Stack allocation and its units
-- Static or dynamic allocation
-- Required queues, semaphores, and mutexes
-- Generated interrupt priorities and RTOS port
-
-The `.ioc` and generated C code should agree. Verify generated output rather
-than assuming a saved CubeMX setting has already been regenerated.
+Resolve the duplicate naming in the repository before relying on consistent
+behavior across case-sensitive and case-insensitive filesystems.
 
 ## TouchGFX
 
-Steering-Wheel changes may require both CubeMX and TouchGFX Designer generation.
+For Steering-Wheel, review both CubeMX and TouchGFX changes.
 
-Review hardware configuration, generated graphics integration, GUI code,
-and library versions together.
-
-See [TouchGFX workflow](touchgfx-workflow.md).
+Verify that application sources, generated assets, target integration, and
+required libraries are present and included in the build. Peripheral
+initialization alone does not complete the graphics application.

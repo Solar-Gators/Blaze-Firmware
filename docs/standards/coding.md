@@ -1,20 +1,24 @@
 # Firmware Coding Standard
 
-Conventions for project-owned Blaze firmware code.
+Status: proposed conventions for project-owned firmware code.
+
+Formatting settings below reflect the existing `.clang-format`. The remaining
+rules are proposed development conventions, not a claim that all existing code
+already follows them.
 
 ## Keep Changes Focused
 
 - Reuse existing code before adding another implementation.
 - Prefer straightforward functions and explicit data flow.
-- Add abstractions when current requirements justify them.
-- Keep unrelated formatting and refactoring out of functional changes.
-- Follow the naming conventions of the module being changed.
+- Add abstractions only when current code needs them.
+- Avoid unrelated refactoring or formatting in functional changes.
+- Follow established naming within the module being changed.
 
 ## Formatting
 
-Use clang-format 17 with the repository's `.clang-format`.
+Use the repository's `.clang-format` configuration.
 
-The configuration uses:
+Its principal settings include:
 
 - Four-space indentation
 - Spaces instead of tabs
@@ -23,100 +27,92 @@ The configuration uses:
 - Left-aligned pointer markers
 - Automatic include sorting
 
-Format changed project-owned files. Preserve vendor notices and avoid
-reformatting bundled libraries.
+Format project-owned files that changed. Preserve vendor notices and avoid
+reformatting bundled libraries as part of application work.
 
-CI checks C/C++ files under `firmware/*/user/` and
-`resources/SolarGators_drivers/`.
-
-The CMake `format` target currently covers additional generated and vendor
-files. Its scope does not match CI.
+A validated clang-format version still needs to be recorded.
 
 ## Generated and Application-Owned Code
 
-Keep application implementations under `user/Src/` and their headers under
-`user/Inc/`.
+Keep custom edits to regenerated files inside `USER CODE` sections.
 
-Keep custom generated-file edits inside matching `USER CODE` sections.
+Prefer application-owned files for substantial application logic. Front-VCU
+currently uses:
 
-For TouchGFX, extend application-owned GUI classes rather than editing
-generated base classes.
+```text
+user/Inc/
+user/Src/
+```
 
-Document manual changes to generated startup or linker files.
+If another subsystem adopts that layout, update its CMake configuration in the
+same change.
 
-## Headers and C/C++ Boundaries
+Document any required manual changes to generated startup or linker files.
 
-- Use include guards or the existing module convention.
-- Include declarations directly required by a file.
+## Headers and Language Boundaries
+
+- Use include guards or the module's existing equivalent.
+- Include the declarations a file directly depends on.
 - Keep internal declarations private where practical.
-- Use C linkage for functions called from C and implemented in C++.
-- Keep declaration and definition signatures identical.
-- Do not include a `.cpp` file from another source file.
+- Use C linkage for functions called from generated C and implemented in C++.
+- Keep declarations and definitions consistent.
 
-Use `user_threads.h` for generated task entry points that call user functions.
+The existing `user_threads.h` demonstrates the C/C++ linkage pattern.
 
-## RTOS Tasks
+## Types, Units, and Protocol Data
 
-For each task, document:
-
-- Responsibility
-- Trigger or execution period
-- Priority
-- Stack size and units
-- Allocation method
-- Shared resources and synchronization
-- Failure behavior
-
-Use blocking waits or delays when a task has no work.
-
-CMSIS-RTOS2 delays use kernel ticks. Do not describe `osDelay(1)` as one
-millisecond without checking the configured tick frequency.
-
-Keep one clear owner of a task's repeated-work loop. A user function that
-owns an infinite loop should be called once by its generated wrapper.
-
-Check resource-creation results where failure affects startup or behavior.
-Use ISR-safe APIs from interrupt context.
-
-## Types and Protocol Data
-
-- Use explicit-width integer types where width affects hardware or protocols.
-- Make physical units clear in names or documentation.
+- Use explicit-width integer types where width affects hardware or wire formats.
+- Name physical values so their units are clear.
 - Document scaling, valid ranges, and invalid-value representations.
-- Encode and decode messages explicitly.
-- Validate lengths and ranges before consuming received data.
+- Encode and decode wire data explicitly; do not assume a C structure's memory
+  layout is the protocol layout.
+- Check lengths and ranges before consuming received data.
 
-Do not invent CAN identifiers, conversion factors, or fault thresholds.
+Do not invent CAN identifiers, timing requirements, or conversion factors.
+Document them when they are defined and verified.
+
+## RTOS and Interrupt Code
+
+For each application task, document its responsibility, trigger or period,
+priority, and stack allocation.
+
+- Use blocking waits or delays when a task has no work.
+- Keep interrupt handlers short.
+- Use APIs appropriate to interrupt context.
+- Define ownership and synchronization for shared state.
+- Check task, queue, and other resource-creation results.
+- State the units used for timeouts and stack sizes.
+
+Use the subsystem's configured RTOS interface consistently.
 
 ## Errors and Watchdogs
 
-- Handle errors that affect application behavior.
-- Define responses to initialization failure, stale data, and communication loss.
-- Service watchdogs according to demonstrated application health.
-- Implement enabled failure hooks or explicitly document their limitations.
-- Keep recovery behavior predictable.
+- Handle return values where failure affects behavior.
+- Define the response to stale data, failed initialization, and communication loss.
+- Make fault recovery explicit.
+- Service a watchdog according to demonstrated application health.
+- Document enabled failure hooks that remain unimplemented.
+
+Fault thresholds and recovery policies are subsystem requirements; this document
+does not assign them.
 
 ## Build Integration
 
 When adding or moving files:
 
-1. Check target source and include paths.
-2. Check MCU definitions and compiler options.
-3. Check startup, linker, and middleware-port compatibility.
-4. Rerun CMake.
-5. Build the affected target.
+1. Update the affected target's sources and include paths.
+2. Verify MCU definitions and compiler options.
+3. Verify startup, linker, and middleware-port compatibility.
+4. Reconfigure and build the affected target.
 
-Do not introduce developer-specific absolute paths.
+Do not introduce developer-specific absolute paths into shared build files.
 
 Avoid filenames that differ only by case.
 
-The shared-driver build configuration currently needs correction. Verify
-that a shared source actually enters the intended build before relying on it.
-
 ## Documentation
 
-Update the subsystem README when changing configuration, task structure,
-build inputs, or implemented behavior.
+Update the subsystem README when changing hardware configuration, task
+structure, build inputs, or implemented behavior.
 
 Distinguish:
 
@@ -125,4 +121,4 @@ Distinguish:
 - Built successfully
 - Verified on hardware
 
-Record unknown hardware or protocol details as unknown.
+These are separate states.

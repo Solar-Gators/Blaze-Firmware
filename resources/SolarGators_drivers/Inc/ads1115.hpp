@@ -5,16 +5,14 @@
 //Last updated: 11/2/2026
 #include "stm32l4xx_hal_i2c.h"
 
-extern "C"
-{
-#include "stm32l4xx_hal.h"
+extern "C" {
+#include "stm32g4xx_hal.h"
 }
 
 #include <cstdint>
 
-class ADS1115
-{
-   public:
+class ADS1115 {
+public:
     enum class Addr7 : uint8_t
     {
         GND = 0x48,
@@ -45,9 +43,8 @@ class ADS1115
         SPS_860 = 7
     };
 
-    ADS1115(I2C_HandleTypeDef* hi2c,
-            Addr7 addr7 = Addr7::GND,
-            Pga pga = Pga::FS_4_096V,
+
+    ADS1115(I2C_HandleTypeDef* hi2c, Addr7 addr7 = Addr7::GND, Pga pga = Pga::FS_4_096V,
             DataRate dr = DataRate::SPS_128);
     HAL_StatusTypeDef init();
     HAL_StatusTypeDef readSingleEnded(uint8_t channel, float& voltage);
@@ -55,16 +52,14 @@ class ADS1115
 
     void setPga(Pga pga);
     void setDataRate(DataRate dr);
-
-   private:
+private:
     I2C_HandleTypeDef* hi2c_;
     uint8_t addr8_;
     Pga pga_;
     DataRate dr_;
     float full_scale_V_;
 
-    enum : uint8_t
-    {
+    enum : uint8_t {
         REG_CONVERSION = 0x00,
         REG_CONFIG = 0x01,
         REG_LO_THRESH = 0x02,
@@ -76,3 +71,4 @@ class ADS1115
     float fullScaleFromPga(Pga pga) const;
     uint16_t buildConfigWord(uint8_t mux_bits) const;
 };
+
