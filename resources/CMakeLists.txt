@@ -16,7 +16,9 @@ if(NOT DRIVER_SOURCES)
     if(NOT EXISTS "${DUMMY_SRC}")
         file(WRITE "${DUMMY_SRC}" "/* Placeholder source file for SolarGators_drivers library */\n")
     endif()
-    set(DRIVER_SOURCES "${DUMMY_SRC}")
+    set(DRIVER_SOURCES "${DUMMY_SRC}"
+            SolarGators_drivers/Inc/ads1115.hpp
+            SolarGators_drivers/Src/ads1115.cpp)
 endif()
 
 # 3. Define the Static Central Drivers Library
@@ -34,4 +36,5 @@ target_compile_options(SolarGators_drivers PRIVATE
 target_include_directories(SolarGators_drivers PUBLIC
         "${CMAKE_CURRENT_SOURCE_DIR}/inc"
         "${CMAKE_CURRENT_SOURCE_DIR}/Drivers"
+        "${CMAKE_CURRENT_SOURCE_DIR}/SolarGators_drivers/Inc"
 )
