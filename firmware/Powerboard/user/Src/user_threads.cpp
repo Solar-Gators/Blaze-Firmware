@@ -3,15 +3,16 @@
 //
 
 #include "user_threads.h"
-#include "power_board.h"
 
 #include "cmsis_os.h"
 
+#include "power_board.h"
+
 void userDefaultTask(void* argument)
 {
-    (void)argument;
+    (void) argument;
     for (;;)
     {
-        fanControlStep();   // one fan-control pass; ends with osDelay(100)
+        fanControlStep();  // one fan-control pass; ends with osDelay(100)
     }
 }
