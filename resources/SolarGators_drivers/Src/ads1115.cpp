@@ -241,7 +241,7 @@ HAL_StatusTypeDef ADS1115::readSingleEnded(uint8_t channel, float& voltage)
 void ADS1115::setPga(Pga pga)
 {
     pga_ = pga;
-    full_scale_V_ = fullScaleFromPga(pga_);;
+    full_scale_V_ = fullScaleFromPga(pga_);
 }
 
 void ADS1115::setDataRate(DataRate dr)
