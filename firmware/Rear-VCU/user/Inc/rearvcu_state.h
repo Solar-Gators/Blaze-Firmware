@@ -1,0 +1,8 @@
+//
+// Created by r3car on 11/7/2026.
+//
+
+#ifndef BLAZEFIRMWARE_REARVCU_STATE_H
+#define BLAZEFIRMWARE_REARVCU_STATE_H
+
+#endif  //BLAZEFIRMWARE_REARVCU_STATE_H

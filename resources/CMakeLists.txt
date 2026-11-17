@@ -1,37 +1,33 @@
 cmake_minimum_required(VERSION 3.20)
-project(SolarGators_drivers C CXX)
 
-# 1. Collect all driver source files inside resources/
-file(GLOB_RECURSE DRIVER_SOURCES
-        "${CMAKE_CURRENT_SOURCE_DIR}/src/*.c"
-        "${CMAKE_CURRENT_SOURCE_DIR}/src/*.cpp"
-        "${CMAKE_CURRENT_SOURCE_DIR}/Drivers/*.c"
-        "${CMAKE_CURRENT_SOURCE_DIR}/Drivers/*.cpp"
-)
+function(add_solargators_drivers firmware_target)
+    set(DRV_ROOT
+            "${CMAKE_CURRENT_FUNCTION_LIST_DIR}/SolarGators_drivers"
+    )
 
-# 2. Prevent CMake error if resources/src/ is currently empty or contains no sources
-if(NOT DRIVER_SOURCES)
-    message(STATUS "No driver source files found in resources/src/. Creating dummy source file.")
-    set(DUMMY_SRC "${CMAKE_CURRENT_BINARY_DIR}/drivers_placeholder.c")
-    if(NOT EXISTS "${DUMMY_SRC}")
-        file(WRITE "${DUMMY_SRC}" "/* Placeholder source file for SolarGators_drivers library */\n")
+    file(GLOB_RECURSE DRIVER_SOURCES CONFIGURE_DEPENDS
+            "${DRV_ROOT}/Src/*.c"
+            "${DRV_ROOT}/Src/*.cpp"
+    )
+
+    if(NOT DRIVER_SOURCES)
+        message(FATAL_ERROR "No driver sources found in ${DRV_ROOT}/Src")
     endif()
-    set(DRIVER_SOURCES "${DUMMY_SRC}")
-endif()
 
-# 3. Define the Static Central Drivers Library
-add_library(SolarGators_drivers STATIC ${DRIVER_SOURCES})
+    set(driver_target "${firmware_target}_drivers_interface")
 
-target_compile_options(SolarGators_drivers PRIVATE
-        -mcpu=cortex-m4
-        -mthumb
-        -mfpu=fpv4-sp-d16
-        -mfloat-abi=hard
-)
+    if(NOT TARGET ${driver_target})
+        add_library(${driver_target} INTERFACE)
 
-# 4. Export Include Directories
-# PUBLIC headers are exposed to any node (e.g., Front-VCU) linking against this library
-target_include_directories(SolarGators_drivers PUBLIC
-        "${CMAKE_CURRENT_SOURCE_DIR}/inc"
-        "${CMAKE_CURRENT_SOURCE_DIR}/Drivers"
-)
+        target_sources(${driver_target} INTERFACE
+                ${DRIVER_SOURCES}
+        )
+
+        target_include_directories(${driver_target} INTERFACE
+                "${DRV_ROOT}/Inc"
+        )
+    endif()
+
+    # Driver sources compile inside the board executable using its settings.
+    target_link_libraries(${firmware_target} PRIVATE ${driver_target})
+endfunction()

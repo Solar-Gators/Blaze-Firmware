@@ -7,6 +7,7 @@
 #include "cmsis_os.h"
 
 #include "power_board.h"
+#include "powerboard.h"
 
 void userDefaultTask(void* argument)
 {

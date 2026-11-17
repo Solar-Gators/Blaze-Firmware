@@ -1,7 +1,6 @@
 cmake_minimum_required(VERSION 3.20)
 project(BMS-Daughterboard C CXX ASM)
 
-# 1. Local Header Directories (CMSIS_RTOS V1 removed)
 set(NODE_INCLUDES
         Core/Inc
         user/Inc
@@ -14,27 +13,24 @@ set(NODE_INCLUDES
         Middlewares/Third_Party/FreeRTOS/Source/CMSIS_RTOS_V2
 )
 
-# 2. Collect Generated & User Sources (CMSIS_RTOS V1 sources excluded)
-file(GLOB_RECURSE CUBEMX_SOURCES
+file(GLOB_RECURSE CUBEMX_SOURCES CONFIGURE_DEPENDS
         "Core/Src/*.c"
         "Core/Src/*.cpp"
         "user/Src/*.c"
         "user/Src/*.cpp"
         "Drivers/STM32L4xx_HAL_Driver/Src/*.c"
         "Middlewares/Third_Party/FreeRTOS/Source/*.c"
-        "Middlewares/Third_Party/FreeRTOS/Source/portable/GCC/ARM_CM4F/*.c"
-        "Middlewares/Third_Party/FreeRTOS/Source/portable/MemMang/*.c"
-        "Middlewares/Third_Party/FreeRTOS/Source/CMSIS_RTOS_V2/*.c"
 )
 
-# Exclude unused FreeRTOS heap allocators (keep only heap_4.c)
-list(FILTER CUBEMX_SOURCES EXCLUDE REGEX "Middlewares/Third_Party/FreeRTOS/Source/portable/MemMang/heap_[1235]\\.c")
-
-# Exclude HAL template sources to resolve duplicate symbol errors
+# Keep the existing heap_4 allocator.
+list(FILTER CUBEMX_SOURCES EXCLUDE REGEX
+        "Middlewares/Third_Party/FreeRTOS/Source/portable/MemMang/heap_[1235]\\.c"
+)
 list(FILTER CUBEMX_SOURCES EXCLUDE REGEX ".*_template\\.c$")
 
-# 3. Locate Startup Assembly File (in CubeMX folder)
-set(STARTUP_SRC "${CMAKE_CURRENT_SOURCE_DIR}/CubeMX/startup_stm32l433xx.s")
+set(STARTUP_SRC
+        "${CMAKE_CURRENT_SOURCE_DIR}/CubeMX/startup_stm32l433xx.s"
+)
 
 if(NOT EXISTS "${STARTUP_SRC}")
     file(GLOB STARTUP_SRC
@@ -43,32 +39,18 @@ if(NOT EXISTS "${STARTUP_SRC}")
     )
 endif()
 
-if(NOT CUBEMX_SOURCES AND NOT STARTUP_SRC)
-    message(FATAL_ERROR "No source files or startup script found for ${PROJECT_NAME}!")
+if(NOT CUBEMX_SOURCES OR NOT STARTUP_SRC)
+    message(FATAL_ERROR "Missing application sources or startup assembly for ${PROJECT_NAME}")
 endif()
 
-# 4. Create Executable Target
 add_executable(${PROJECT_NAME}.elf ${CUBEMX_SOURCES} ${STARTUP_SRC})
 
 target_include_directories(${PROJECT_NAME}.elf PRIVATE ${NODE_INCLUDES})
 
-# 5. Compile Definitions
 target_compile_definitions(${PROJECT_NAME}.elf PRIVATE
         STM32L433xx
         USE_HAL_DRIVER
 )
-
-target_compile_definitions(SolarGators_drivers PRIVATE
-        STM32L433xx
-        USE_HAL_DRIVER
-)
-
-# 6. Linker Configuration & Target Link Options (in CubeMX folder)
-set(LINKER_SCRIPT "${CMAKE_CURRENT_SOURCE_DIR}/CubeMX/STM32L433CCUX_FLASH.ld")
-
-if(NOT EXISTS "${LINKER_SCRIPT}")
-    file(GLOB LINKER_SCRIPT "${CMAKE_CURRENT_SOURCE_DIR}/CubeMX/*.ld")
-endif()
 
 target_compile_options(${PROJECT_NAME}.elf PRIVATE
         -mcpu=cortex-m4
@@ -77,25 +59,40 @@ target_compile_options(${PROJECT_NAME}.elf PRIVATE
         -mfloat-abi=hard
 )
 
+set(LINKER_SCRIPT
+        "${CMAKE_CURRENT_SOURCE_DIR}/CubeMX/STM32L433CCUX_FLASH.ld"
+)
+
+if(NOT EXISTS "${LINKER_SCRIPT}")
+    file(GLOB LINKER_SCRIPT "${CMAKE_CURRENT_SOURCE_DIR}/CubeMX/*.ld")
+endif()
+
+list(LENGTH LINKER_SCRIPT LINKER_SCRIPT_COUNT)
+if(NOT LINKER_SCRIPT_COUNT EQUAL 1)
+    message(FATAL_ERROR "Expected one linker script for ${PROJECT_NAME}")
+endif()
+
 target_link_options(${PROJECT_NAME}.elf PRIVATE
         -mcpu=cortex-m4
         -mthumb
         -mfpu=fpv4-sp-d16
         -mfloat-abi=hard
-        -T${LINKER_SCRIPT}
-        -Wl,-Map=${PROJECT_NAME}.map
+        "-T${LINKER_SCRIPT}"
+        "-Wl,-Map=${PROJECT_NAME}.map"
         -Wl,--gc-sections
         -Wl,--print-memory-usage
         --specs=nano.specs
 )
 
-# 7. Link Central Drivers Library & Share CubeMX Includes
-target_link_libraries(${PROJECT_NAME}.elf PRIVATE SolarGators_drivers)
-target_include_directories(SolarGators_drivers PRIVATE ${NODE_INCLUDES})
+add_solargators_drivers(${PROJECT_NAME}.elf)
 
-# 8. Post-Build Commands (.bin, .hex, size display)
 add_custom_command(TARGET ${PROJECT_NAME}.elf POST_BUILD
-        COMMAND ${CMAKE_OBJCOPY} -O binary ${PROJECT_NAME}.elf ${PROJECT_NAME}.bin
-        COMMAND ${CMAKE_OBJCOPY} -O ihex ${PROJECT_NAME}.elf ${PROJECT_NAME}.hex
-        COMMAND ${CMAKE_SIZE} ${PROJECT_NAME}.elf
+        COMMAND ${CMAKE_OBJCOPY} -O binary
+        "$<TARGET_FILE:${PROJECT_NAME}.elf>"
+        "${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}.bin"
+        COMMAND ${CMAKE_OBJCOPY} -O ihex
+        "$<TARGET_FILE:${PROJECT_NAME}.elf>"
+        "${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}.hex"
+        COMMAND ${CMAKE_SIZE} "$<TARGET_FILE:${PROJECT_NAME}.elf>"
+        VERBATIM
 )
