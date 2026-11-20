@@ -68,6 +68,8 @@ list(REMOVE_DUPLICATES CUBEMX_SOURCES)
 
 set(STARTUP_SRC
         "${CMAKE_CURRENT_SOURCE_DIR}/CubeMX/startup_stm32u5g9xx.s"
+        "../../resources/SolarGators_drivers/Inc/CAN Driver - Jack Cuilla.h"
+        "../../resources/SolarGators_drivers/Inc/CAN Driver - Jack Cuilla.h"
 )
 
 if(NOT EXISTS "${STARTUP_SRC}")
