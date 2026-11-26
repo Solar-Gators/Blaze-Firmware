@@ -175,7 +175,8 @@ HAL_StatusTypeDef startDevice(
 
 }  // namespace
 
-// add ids filters here as well
+// add ids filters here
+// as well
 HAL_StatusTypeDef can_init()
 {
     // Call once from a running RTOS task.
